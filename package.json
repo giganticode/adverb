@@ -1,0 +1,371 @@
+{
+	"name": "adverb",
+	"displayName": "adverb",
+	"description": "Rename code symbols locally without changing the original source code. This makes it easier for you to read other people's source code and increases your productivity through the improved naming.",
+	"version": "0.0.1",
+	"engines": {
+		"vscode": "^1.60.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"onCommand:adverb.renameSingle",
+		"onCommand:adverb.renameAll",
+		"onCommand:adverb.fold",
+		"onLanguage:javascript",
+		"onLanguage:typescript",
+		"onView:adverb.globalRenamings",
+		"onView:adverb.localRenamings"
+	],
+	"main": "./out/extension.js",
+	"contributes": {
+		"commands": [
+			{
+				"command": "adverb.renameSingle",
+				"title": "Rename single symbol",
+				"category": "Adverb"
+			},
+			{
+				"command": "adverb.renameAll",
+				"title": "Rename all symbols",
+				"category": "Adverb"
+			},
+			{
+				"command": "adverb.fold",
+				"title": "Fold lines and show summary",
+				"category": "Adverb",
+				"icon": {
+					"light": "resources/light/add.svg",
+					"dark": "resources/dark/add.svg"
+				}
+			},
+			{
+				"command": "adverb.globalRefreshRenamings",
+				"title": "Refresh",
+				"icon": {
+					"light": "resources/light/refresh.svg",
+					"dark": "resources/dark/refresh.svg"
+				}
+			},
+			{
+				"command": "adverb.globalEditRenaming",
+				"title": "Edit",
+				"icon": {
+					"light": "resources/light/edit.svg",
+					"dark": "resources/dark/edit.svg"
+				}
+			},
+			{
+				"command": "adverb.globalDeleteRenaming",
+				"title": "Delete",
+				"icon": {
+					"light": "resources/light/trash.svg",
+					"dark": "resources/dark/trash.svg"
+				}
+			},
+			{
+				"command": "adverb.globalActuallyRename",
+				"title": "Actually rename",
+				"icon": {
+					"light": "resources/light/rename.svg",
+					"dark": "resources/dark/rename.svg"
+				}
+			},
+			{
+				"command": "adverb.localRefreshRenamings",
+				"title": "Refresh",
+				"icon": {
+					"light": "resources/light/refresh.svg",
+					"dark": "resources/dark/refresh.svg"
+				}
+			},
+			{
+				"command": "adverb.localEditRenaming",
+				"title": "Edit",
+				"icon": {
+					"light": "resources/light/edit.svg",
+					"dark": "resources/dark/edit.svg"
+				}
+			},
+			{
+				"command": "adverb.localDeleteRenaming",
+				"title": "Delete",
+				"icon": {
+					"light": "resources/light/trash.svg",
+					"dark": "resources/dark/trash.svg"
+				}
+			},
+			{
+				"command": "adverb.localActuallyRename",
+				"title": "Actually rename",
+				"icon": {
+					"light": "resources/light/rename.svg",
+					"dark": "resources/dark/rename.svg"
+				}
+			}
+		],
+		"keybindings": [
+			{
+				"command": "adverb.renameSingle",
+				"key": "shift+f2",
+				"when": "config.adverb.renamingEnabled && editorTextFocus && editorLangId == javascript || editorLangId == typescript"
+			},
+			{
+				"command": "adverb.renameAll",
+				"key": "ctrl+shift+f2",
+				"when": "config.adverb.renamingEnabled && editorLangId == javascript || editorLangId == typescript"
+			},
+			{
+				"command": "adverb.fold",
+				"key": "alt+k",
+				"when": "config.adverb.renamingEnabled && editorLangId == javascript || editorLangId == typescript"
+			}
+		],
+		"menus": {
+			"commandPalette": [
+				{
+					"command": "adverb.renameSingle",
+					"when": "config.adverb.renamingEnabled && editorLangId == javascript || editorLangId == typescript",
+					"group": "Adverb"
+				},
+				{
+					"command": "adverb.renameAll",
+					"when": "config.adverb.renamingEnabled && editorLangId == javascript || editorLangId == typescript",
+					"group": "Adverb"
+				},
+				{
+					"command": "adverb.fold",
+					"when": "config.adverb.renamingEnabled && editorLangId == javascript || editorLangId == typescript",
+					"group": "Adverb"
+				}
+			],
+			"editor/context": [
+				{
+					"command": "adverb.renameSingle",
+					"group": "1_modification",
+					"when": "config.adverb.renamingEnabled && editorTextFocus && editorLangId == javascript || editorLangId == typescript"
+				},
+				{
+					"command": "adverb.renameAll",
+					"group": "1_modification",
+					"when": "config.adverb.renamingEnabled && editorLangId == javascript || editorLangId == typescript"
+				},
+				{
+					"command": "adverb.fold",
+					"group": "1_modification",
+					"when": "config.adverb.renamingEnabled && editorLangId == javascript || editorLangId == typescript"
+				}
+			],
+			"view/title": [
+				{
+					"command": "adverb.globalRefreshRenamings",
+					"when": "view == adverb.globalRenamings",
+					"group": "navigation"
+				},
+				{
+					"command": "adverb.localRefreshRenamings",
+					"when": "view == adverb.localRenamings",
+					"group": "navigation"
+				}
+			],
+			"view/item/context": [
+				{
+					"command": "adverb.globalActuallyRename",
+					"when": "view == adverb.globalRenamings",
+					"group": "inline"
+				},
+				{
+					"command": "adverb.globalDeleteRenaming",
+					"when": "view == adverb.globalRenamings",
+					"group": "inline"
+				},
+				{
+					"command": "adverb.globalEditRenaming",
+					"when": "view == adverb.globalRenamings",
+					"group": "inline"
+				},
+				{
+					"command": "adverb.localActuallyRename",
+					"when": "view == adverb.localRenamings",
+					"group": "inline"
+				},
+				{
+					"command": "adverb.localDeleteRenaming",
+					"when": "view == adverb.localRenamings",
+					"group": "inline"
+				},
+				{
+					"command": "adverb.localEditRenaming",
+					"when": "view == adverb.localRenamings",
+					"group": "inline"
+				}
+			]
+		},
+		"views": {
+			"explorer": [
+				{
+					"id": "adverb.globalRenamings",
+					"name": "Adverb: Renamings (global)",
+					"when": "config.adverb.renamingEnabled && config.adverb.treeViewsEnabled"
+				},
+				{
+					"id": "adverb.localRenamings",
+					"name": "Adverb: Renamings (local)",
+					"when": "config.adverb.renamingEnabled && config.adverb.treeViewsEnabled"
+				}
+			]
+		},
+		"viewsWelcome": [
+			{
+				"view": "adverb.globalRenamings",
+				"contents": "No global renamings found."
+			},
+			{
+				"view": "adverb.localRenamings",
+				"contents": "No local renamings found."
+			}
+		],
+		"configuration": [
+			{
+				"title": "Adverb",
+				"properties": {
+					"adverb.renamingEnabled": {
+						"type": "boolean",
+						"description": "Renaming enabled",
+						"default": true
+					},
+					"adverb.foldingEnabled": {
+						"type": "boolean",
+						"description": "Folding enabled",
+						"default": true
+					},
+					"adverb.treeViewsEnabled": {
+						"type": "boolean",
+						"description": "Tree views (sidebars) enabled",
+						"default": true
+					},
+					"adverb.codeLensEnabled": {
+						"type": "boolean",
+						"description": "Code Lens enabled",
+						"default": true
+					},
+					"adverb.fileDecorationsEnabled": {
+						"type": "boolean",
+						"description": "File decorations enabled",
+						"default": true
+					},
+					"adverb.renamingModel": {
+						"type": "string",
+						"description": "Renaming ML model",
+						"enum": [
+							"huggingface/CodeBERTa",
+							"microsoft/codebert-base-mlm",
+							"Salesforce/codet5-base"
+						],
+						"default": "Salesforce/codet5-base"
+					},
+					"adverb.backendUrl": {
+						"type": "string",
+						"description": "Backend url",
+						"default": "http://127.0.0.1:8080"
+					},
+					"adverb.nameUrl": {
+						"type": "string",
+						"description": "Code name url",
+						"default": "/api/name"
+					},
+					"adverb.summaryUrl": {
+						"type": "string",
+						"description": "Code summarization url",
+						"default": "/api/summary"
+					},
+					"adverb.fontWeight": {
+						"type": "string",
+						"default": "inherit",
+						"enum": [
+							"inherit",
+							"100",
+							"200",
+							"300",
+							"400",
+							"500",
+							"600",
+							"700",
+							"800",
+							"900"
+						],
+						"description": "Font weight CSS property of renaming/folding"
+					},
+					"adverb.fontStyle": {
+						"type": "string",
+						"default": "inherit",
+						"enum": [
+							"normal",
+							"italic",
+							"inherit"
+						],
+						"description": "Font style CSS property of renaming/folding"
+					},
+					"adverb.fontSize": {
+						"type": "string",
+						"default": "inherit",
+						"description": "Font size CSS property of renaming/folding"
+					},
+					"adverb.margin": {
+						"type": "string",
+						"default": "none",
+						"description": "Margin CSS property of renaming/folding"
+					},
+					"adverb.padding": {
+						"type": "string",
+						"default": "none",
+						"description": "Padding CSS property of renaming/folding"
+					},
+					"adverb.borderRadius": {
+						"type": "string",
+						"default": "none",
+						"description": "Border radius CSS property of renaming/folding"
+					},
+					"adverb.border": {
+						"type": "string",
+						"default": "none",
+						"description": "Border CSS property of renaming/folding"
+					},
+					"adverb.backgroundColor": {
+						"type": "string",
+						"defaults": "inherit",
+						"description": "Background color CSS property of renaming/folding"
+					},
+					"adverb.fontColor": {
+						"type": "string",
+						"default": "inherit",
+						"description": "Font color CSS property of renaming/folding"
+					}
+				}
+			}
+		]
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"watch": "tsc -watch -p ./",
+		"lint": "eslint src --ext ts"
+	},
+	"devDependencies": {
+		"@types/babel__traverse": "^7.14.2",
+		"@types/node": "^17.0.18",
+		"@types/vscode": "^1.64.0",
+		"@typescript-eslint/eslint-plugin": "^5.12.0",
+		"@typescript-eslint/parser": "^5.12.0",
+		"eslint": "^8.9.0",
+		"typescript": "^4.5.5"
+	},
+	"dependencies": {
+		"@babel/parser": "^7.17.3",
+		"@babel/traverse": "^7.17.3",
+		"@babel/types": "^7.17.0",
+		"axios": "^0.26.0",
+		"recast": "^0.20.5"
+	}
+}
