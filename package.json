@@ -41,6 +41,11 @@
 				}
 			},
 			{
+				"command": "adverb.search",
+				"title": "Search code with natural language",
+				"category": "Adverb"
+			},
+			{
 				"command": "adverb.globalRefreshRenamings",
 				"title": "Refresh",
 				"icon": {
@@ -109,34 +114,44 @@
 			{
 				"command": "adverb.renameSingle",
 				"key": "shift+f2",
-				"when": "config.adverb.renamingEnabled && editorTextFocus && editorLangId == javascript || editorLangId == typescript"
+				"when": "editorTextFocus && editorLangId == javascript || editorLangId == typescript"
 			},
 			{
 				"command": "adverb.renameAll",
-				"key": "ctrl+shift+f2",
-				"when": "config.adverb.renamingEnabled && editorLangId == javascript || editorLangId == typescript"
+				"key": "alt+shift+f2",
+				"when": "editorLangId == javascript || editorLangId == typescript"
 			},
 			{
 				"command": "adverb.fold",
 				"key": "alt+k",
-				"when": "config.adverb.renamingEnabled && editorLangId == javascript || editorLangId == typescript"
+				"when": "editorLangId == javascript || editorLangId == typescript"
+			},
+			{
+				"command": "adverb.search",
+				"key": "alt+s",
+				"when": "editorLangId == javascript || editorLangId == typescript"
 			}
 		],
 		"menus": {
 			"commandPalette": [
 				{
 					"command": "adverb.renameSingle",
-					"when": "config.adverb.renamingEnabled && editorLangId == javascript || editorLangId == typescript",
+					"when": "editorLangId == javascript || editorLangId == typescript",
 					"group": "Adverb"
 				},
 				{
 					"command": "adverb.renameAll",
-					"when": "config.adverb.renamingEnabled && editorLangId == javascript || editorLangId == typescript",
+					"when": "editorLangId == javascript || editorLangId == typescript",
 					"group": "Adverb"
 				},
 				{
 					"command": "adverb.fold",
-					"when": "config.adverb.renamingEnabled && editorLangId == javascript || editorLangId == typescript",
+					"when": "editorLangId == javascript || editorLangId == typescript",
+					"group": "Adverb"
+				},
+				{
+					"command": "adverb.search",
+					"when": "editorLangId == javascript || editorLangId == typescript",
 					"group": "Adverb"
 				}
 			],
@@ -144,17 +159,17 @@
 				{
 					"command": "adverb.renameSingle",
 					"group": "1_modification",
-					"when": "config.adverb.renamingEnabled && editorTextFocus && editorLangId == javascript || editorLangId == typescript"
+					"when": "editorTextFocus && editorLangId == javascript || editorLangId == typescript"
 				},
 				{
 					"command": "adverb.renameAll",
 					"group": "1_modification",
-					"when": "config.adverb.renamingEnabled && editorLangId == javascript || editorLangId == typescript"
+					"when": "editorLangId == javascript || editorLangId == typescript"
 				},
 				{
 					"command": "adverb.fold",
 					"group": "1_modification",
-					"when": "config.adverb.renamingEnabled && editorLangId == javascript || editorLangId == typescript"
+					"when": "editorLangId == javascript || editorLangId == typescript"
 				}
 			],
 			"view/title": [
@@ -206,13 +221,11 @@
 			"explorer": [
 				{
 					"id": "adverb.globalRenamings",
-					"name": "Adverb: Renamings (global)",
-					"when": "config.adverb.renamingEnabled && config.adverb.treeViewsEnabled"
+					"name": "Adverb: Renamings (global)"
 				},
 				{
 					"id": "adverb.localRenamings",
-					"name": "Adverb: Renamings (local)",
-					"when": "config.adverb.renamingEnabled && config.adverb.treeViewsEnabled"
+					"name": "Adverb: Renamings (local)"
 				}
 			]
 		},
@@ -230,21 +243,6 @@
 			{
 				"title": "Adverb",
 				"properties": {
-					"adverb.renamingEnabled": {
-						"type": "boolean",
-						"description": "Renaming enabled",
-						"default": true
-					},
-					"adverb.foldingEnabled": {
-						"type": "boolean",
-						"description": "Folding enabled",
-						"default": true
-					},
-					"adverb.treeViewsEnabled": {
-						"type": "boolean",
-						"description": "Tree views (sidebars) enabled",
-						"default": true
-					},
 					"adverb.codeLensEnabled": {
 						"type": "boolean",
 						"description": "Code Lens enabled",
@@ -279,6 +277,38 @@
 						"type": "string",
 						"description": "Code summarization url",
 						"default": "/api/summary"
+					},
+					"adverb.searchUrl": {
+						"type": "string",
+						"description": "Search code with natural language url",
+						"default": "/api/search"
+					},
+					"adverb.excludeDirectories": {
+						"type": "array",
+						"default": [
+							"node_modules",
+							"out",
+							".git"
+						],
+						"description": "Determines the folder names that sould not be considered for search"
+					},
+					"adverb.excludeFiletypes": {
+						"type": "array",
+						"default": [
+							".png",
+							".jpg",
+							".jpeg",
+							".svg",
+							".md",
+							".gitignore",
+							".vscodeignore",
+							".yml",
+							".xml",
+							".gradle",
+							".pro",
+							".json"
+						],
+						"description": "Determines the file types that sould not be considered for search"
 					},
 					"adverb.fontWeight": {
 						"type": "string",
@@ -354,10 +384,10 @@
 	},
 	"devDependencies": {
 		"@types/babel__traverse": "^7.14.2",
-		"@types/node": "^17.0.18",
+		"@types/node": "^17.0.21",
 		"@types/vscode": "^1.64.0",
-		"@typescript-eslint/eslint-plugin": "^5.12.0",
-		"@typescript-eslint/parser": "^5.12.0",
+		"@typescript-eslint/eslint-plugin": "^5.12.1",
+		"@typescript-eslint/parser": "^5.12.1",
 		"eslint": "^8.9.0",
 		"typescript": "^4.5.5"
 	},

@@ -1,5 +1,5 @@
 import { commands, Disposable, window } from "vscode";
-import { SUPPORTED_LANGUAGES } from "../../utils";
+import { SUPPORTED_LANGUAGES } from "../../extension";
 import { Commands } from ".";
 
 export abstract class Command implements Disposable {

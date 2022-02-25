@@ -3,3 +3,4 @@ export * from "./foldCommand";
 export * from "./foldOrCommentCommand";
 export * from "./renameAllCommand";
 export * from "./renameSingleCommand";
+export * from "./searchCommand";

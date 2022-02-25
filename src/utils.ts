@@ -17,16 +17,10 @@ import {
 } from "vscode";
 import ast from "./ast";
 import { Cache } from "./cache";
-import { ModifiedFileFileDecorationProvider } from "./fileDecorations";
+import { localTreeViewProvider, fileDecorationProvider, globalTreeViewProvider, SUPPORTED_LANGUAGES } from "./extension";
 import { Settings } from "./settings";
-import { GlobalRenamingTreeViewProvider, LocalRenamingTreeViewProvider } from "./treeViews";
-
-export const SUPPORTED_LANGUAGES = ["javascript", "typescript"];
 
 let renamingTimeout: NodeJS.Timer | undefined = undefined;
-let globalTreeViewProvider: GlobalRenamingTreeViewProvider;
-let localTreeViewProvider: LocalRenamingTreeViewProvider;
-let fileDecorationProvider: ModifiedFileFileDecorationProvider;
 
 let foldingProvider: Disposable | undefined;
 const foldingHideDecorationType = window.createTextEditorDecorationType({
@@ -35,12 +29,6 @@ const foldingHideDecorationType = window.createTextEditorDecorationType({
   letterSpacing: "-100em"
 });
 const foldingDecorationType = window.createTextEditorDecorationType({});
-
-export const initialize = (_globalTreeViewProvider: GlobalRenamingTreeViewProvider, _localTreeViewProvider: LocalRenamingTreeViewProvider, _fileDecorationProvider: ModifiedFileFileDecorationProvider) => {
-  globalTreeViewProvider = _globalTreeViewProvider;
-  localTreeViewProvider = _localTreeViewProvider;
-  fileDecorationProvider = _fileDecorationProvider;
-}
 
 export const refreshRenamings = (positions: Position[] | undefined = undefined) => {
   if (renamingTimeout) {
@@ -51,16 +39,10 @@ export const refreshRenamings = (positions: Position[] | undefined = undefined) 
     const editor = window.activeTextEditor;
     if (editor) {
       ast.refreshRenamings(editor, positions);
-      if (Settings.isRenamingEnabled() && Settings.areTreeViewsEnabled())
-        localTreeViewProvider?.refresh(editor.document.uri);
-      else
-        localTreeViewProvider?.dispose();
+      localTreeViewProvider?.refresh(editor.document.uri);
       fileDecorationProvider?.refresh(editor.document.uri);
     }
-    if (Settings.isRenamingEnabled() && Settings.areTreeViewsEnabled())
-      globalTreeViewProvider?.refresh();
-    else
-      globalTreeViewProvider?.dispose();
+    globalTreeViewProvider?.refresh();
   }, 100);
 };
 
@@ -71,12 +53,6 @@ export const addFolding = async (editor: TextEditor, start: number, end: number,
 };
 
 export const refreshFoldings = async (editor: TextEditor, visibleRanges: readonly Range[]) => {
-  if (!Settings.isFoldingEnabled()) {
-    foldingProvider?.dispose();
-    editor.setDecorations(foldingHideDecorationType, []);
-    editor.setDecorations(foldingDecorationType, []);
-    return;
-  }
   const visibleLines = getVisibleRows(editor, visibleRanges);
   const cachedFoldings = Cache.getFoldingCacheOfDocument(editor.document.fileName)
   const provider: FoldingRangeProvider = {
@@ -153,7 +129,7 @@ export const getPositionsFromRange = (start: Position, stop: Position): Position
 
 export const getVisibleRows = (editor: TextEditor, visibleRanges: readonly Range[] | undefined = undefined): Set<number> => {
   const visibleRows: Set<number> = new Set<number>();
-  var _visibleRanges = visibleRanges;
+  let _visibleRanges = visibleRanges;
   if (!_visibleRanges)
     _visibleRanges = editor.visibleRanges;
   _visibleRanges.forEach(r => {

@@ -91,7 +91,8 @@ export class RenameSingleCommand extends Command {
       return (input: MultiStepInput) => inputName(input, state);
     };
     async function inputName(input: MultiStepInput, state: Partial<State>) {
-      if (!newNames[state.renamingTechnique!.id as number]) {
+      const technique = renamingTypes.find(x => x.id === state.renamingTechnique?.id);
+      if (!technique || (technique.getNewNameFunction !== undefined && !newNames[state.renamingTechnique!.id as number])) {
         window.showErrorMessage("Error getting new name for symbol.");
         return;
       }

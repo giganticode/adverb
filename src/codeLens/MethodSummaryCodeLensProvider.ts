@@ -60,7 +60,7 @@ export class MethodSummaryCodeLensProvider implements CodeLensProvider {
                 if (summary) {
                     codeLens.command = {
                         title: summary,
-                        tooltip: Settings.isFoldingEnabled() ? "Click to fold or to add summary as comment" : "Click to add summary as comment",
+                        tooltip: "Click to fold or to add summary as comment",
                         command: Commands.FoldOrComment,
                         arguments: [codeLens.range.start.line, codeLens.range.end.line, summary]
                     }

@@ -1,6 +1,7 @@
 import { commands, Disposable, TextEditor, window } from "vscode";
 import configuration from "../configuration";
-import { refreshRenamings, SUPPORTED_LANGUAGES } from "../utils";
+import { SUPPORTED_LANGUAGES } from "../extension";
+import { refreshRenamings } from "../utils";
 import { BaseRenamingTreeViewProvider } from "./_helpers/baseRenamingTreeViewProvider";
 import { RenamingTreeItem } from "./nodes";
 
@@ -20,9 +21,7 @@ export class LocalRenamingTreeViewProvider extends BaseRenamingTreeViewProvider 
 
   async edit(node: RenamingTreeItem) {
     const editor = window.activeTextEditor;
-		if (!editor)
-			return;
-		if (!SUPPORTED_LANGUAGES.includes(editor.document.languageId))
+		if (!editor || !SUPPORTED_LANGUAGES.includes(editor.document.languageId))
 			return;
     const renamingConfiguration = await configuration.getRenaming(editor.document.uri, node.originalName);
     if(renamingConfiguration)

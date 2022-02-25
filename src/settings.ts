@@ -8,18 +8,6 @@ export class Settings {
   }
 
   // ** BASIC **
-  static isRenamingEnabled(): boolean {
-    return Settings.configuration.get<boolean>("renamingEnabled", true);
-  }
-
-  static isFoldingEnabled(): boolean {
-    return Settings.configuration.get<boolean>("foldingEnabled", true);
-  }
-
-  static areTreeViewsEnabled(): boolean {
-    return Settings.configuration.get<boolean>("treeViewsEnabled", true);
-  }
-
   static areCodeLensEnabled(): boolean {
     return Settings.configuration.get<boolean>("codeLensEnabled", true);
   }
@@ -47,7 +35,17 @@ export class Settings {
     return this.getBackendUrl() + Settings.configuration.get<string>("nameUrl", "/api/name");
   }
 
+  static getSearchApiUrl(): string {
+    return this.getBackendUrl() + Settings.configuration.get<string>("searchUrl", "/api/search");
+  }
 
+  static getDirectoriesToExclude(): string[] {
+    return Settings.configuration.get<string[]>("excludeDirectories", []);
+  }
+
+  static getFileTypesToExclude(): string[] {
+    return Settings.configuration.get<string[]>("excludeFiletypes", []);
+  }
 
   // ** STYLING **
   static getBackgroundColor(): string | ThemeColor {

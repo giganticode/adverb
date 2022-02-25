@@ -13,7 +13,7 @@ export class RenamingType {
 export const getRenamingTypes = (): RenamingType[] => [
     {
         id: 1,
-        description: "Enter new name",
+        description: "Enter new custom name",
         onlyForSingleRenaming: true,
         onlyForFunctionNames: false,
         getNewNameFunction: undefined

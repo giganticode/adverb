@@ -12,23 +12,19 @@ export class FoldOrCommentCommand extends Command {
     let end = args[1] as number;
     let summary = args[2] as string;
 
-    if(Settings.isFoldingEnabled()){
-        const result = await window.showQuickPick(["Fold function body and show summary", "Add summary as comment/documentation"], {canPickMany: false});
-        if(result){
-            if(result === "Fold function body and show summary"){
-                commands.executeCommand(Commands.Fold, start, end, summary);
-            }else{
-                this.commentFile(editor, start, summary);
-            }
-        }
-    }else{
+    const result = await window.showQuickPick(["Fold function body and show summary", "Add summary as comment/documentation"], { canPickMany: false });
+    if (result) {
+      if (result === "Fold function body and show summary") {
+        commands.executeCommand(Commands.Fold, start, end, summary);
+      } else {
         this.commentFile(editor, start, summary);
+      }
     }
   }
 
   private commentFile(editor: TextEditor, start: number, summary: string) {
     editor.edit(editBuilder => {
-        editBuilder.insert(new Position(start, 0), `/**\n * ${summary}\n */\n`);
+      editBuilder.insert(new Position(start, 0), `/**\n * ${summary}\n */\n`);
     });
   }
 }

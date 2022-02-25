@@ -3,7 +3,8 @@ import ast from "../../ast";
 import { getRenamingTypes, RenamingConfiguration } from "../../models";
 import { GlobalConfiguration } from "../../models/GlobalConfiguration";
 import configuration from "../../configuration";
-import { SUPPORTED_LANGUAGES, refreshRenamings } from "../../utils";
+import { SUPPORTED_LANGUAGES } from "../../extension";
+import { refreshRenamings } from "../../utils";
 import { RenamingTreeItem } from "../nodes";
 import { BaseTreeViewProvider } from ".";
 
