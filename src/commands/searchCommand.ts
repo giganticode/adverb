@@ -1,6 +1,7 @@
 import axios from "axios";
 import * as fs from "fs";
 import * as path from "path";
+import { Md5 } from "ts-md5";
 import { ExtensionContext, Position, Selection, TextEditor, TextEditorRevealType, Uri, ViewColumn, WebviewPanel, window, workspace } from "vscode";
 import { Settings } from "../settings";
 import { Command, Commands } from "./_helpers";
@@ -26,10 +27,12 @@ export class SearchCommand extends Command {
   private directoryMap: DirectoryMap = {};
   private context: ExtensionContext;
   private dataArray: Item[] = [];
+  private CACHE_PATH: string;
 
   constructor(context: ExtensionContext) {
     super(Commands.Search);
     this.context = context;
+    this.CACHE_PATH = path.resolve(this.context.extensionPath, "resources", "images", "minimap");
   }
 
   async execute(editor: TextEditor, ...args: any[]) {
@@ -42,14 +45,14 @@ export class SearchCommand extends Command {
       // Otherwise, create a new panel
       this.overviewPanel = window.createWebviewPanel(
         "search",
-        "Search",
+        "Search code in NL",
         columnToShowIn,
         {
           enableScripts: true,
           retainContextWhenHidden: true,
           localResourceRoots: [
             Uri.file(path.join(this.context.extensionPath, "resources")),
-            Uri.file(path.join(this.context.extensionPath, "images", "minimap")),
+            Uri.file(path.join(this.context.extensionPath, "resources", "images", "minimap"))
           ]
         }
       );
@@ -70,6 +73,40 @@ export class SearchCommand extends Command {
     }
   }
 
+  private generateSVGFromPath(filePath: string) {
+    let extension = path.extname(filePath);
+    if (Settings.getFileTypesToExclude().indexOf(extension) > -1)
+      return;
+  
+    let content = fs.readFileSync(filePath).toString();
+    let lines = content.split(/\r\n|\r|\n/);
+    let lineCount = lines.length;
+    content = content.replace("\t", "    ");
+    let lastModified = fs.statSync(filePath).mtime;
+    let hash = Md5.hashStr(filePath) as string;
+  
+    // Check if cached file exists
+    if(!fs.existsSync(this.CACHE_PATH))
+      fs.mkdirSync(this.CACHE_PATH, {recursive: true});
+    let cachePath = path.join(this.CACHE_PATH, hash + ".svg");
+    if (!fs.existsSync(cachePath) || fs.statSync(cachePath).mtime < lastModified) {
+      // Cached file does not exists or is outdated -> create new one
+      let svg = `<svg width="75" height="${lineCount*3}" viewPort="0 0 32 48" xmlns="http://www.w3.org/2000/svg">`;
+  
+      let y = 1;
+      lines.forEach(function (line: string) {
+        let indent = (line.match(/^\s*/)||[""])[0].length;
+        let length = Math.min(line.length - indent, 75);
+        svg += `<polygon points="${indent},${y} ${length},${y} ${length},${y+2} ${indent},${y+2}" fill="rgba(200,200,200,80)"/>`;
+        y += 3;
+      });
+    
+      svg += '</svg>';
+  
+      fs.writeFileSync(cachePath, svg);
+    }
+  }
+
   private getCachedWebViewContent() {
     if (this.cachedWebViewContent === null) {
       this.cachedWebViewContent = this.getWebviewContent();
@@ -84,6 +121,7 @@ export class SearchCommand extends Command {
     const resourcePath = path.resolve(this.context.extensionPath, "resources");
     this.dataArray = [];
     this.initDirectoryMap();
+    this.initCache();
   
     for (const key in this.directoryMap) {
       const element = this.directoryMap[key];
@@ -101,6 +139,16 @@ export class SearchCommand extends Command {
     });
   
     return html;
+  }
+
+  private initCache() {
+    try {
+      for (let file in this.directoryMap) {
+        let item = this.directoryMap[file];
+        this.generateSVGFromPath(item.path);
+      }
+    } catch {
+    }
   }
 
   private initDirectoryMap() {
@@ -140,7 +188,7 @@ export class SearchCommand extends Command {
           newItem.content = content;
           newItem.lines = lineCount;
           newItem.lastModified = fs.statSync(absolutePath).mtime;
-          // newItem.hash = Md5.hashStr(absolutePath) as string;
+          newItem.hash = Md5.hashStr(absolutePath) as string;
           this.directoryMap[relativePath] = newItem;
         }
       });
@@ -151,22 +199,20 @@ export class SearchCommand extends Command {
 
   private getSearchResultFromWebServie(item: Item, search_phrase: string) {
     const url = Settings.getSearchApiUrl();
-
+    const batch_size = 8;
     item.match = [];
     axios.post(url, {
       content: item.content,
-      search: search_phrase
+      search: search_phrase,
+      batch_size: batch_size
     }).then((response: any) => {
-      console.log("got search result");
       console.log(response.data);
-    }).catch((error: any) => {
-      console.log("Search error");
-      console.log(error);
-      item.match = {};
+      item.match = response.data.result.search_lines
+    }).catch(() => {
     }).finally(() => {
       const index = Object.keys(this.directoryMap).indexOf(item.relativePath);
       if (this.overviewPanel) {
-        this.overviewPanel.webview.postMessage({ command: "searchResults", data: { index: index, match: item.match } });
+        this.overviewPanel.webview.postMessage({ command: "searchResults", data: { index: index, match: item.match, batch_size: batch_size } });
       }
     });
   }
@@ -181,7 +227,7 @@ export class SearchCommand extends Command {
               this.overviewPanel!.webview.postMessage({
                 command: "init",
                 data: this.dataArray,
-                cachePath: path.join(this.context.extensionPath, "images", "minimap") + "/",
+                cachePath: this.CACHE_PATH.replace(new RegExp("\\\\"), "/") + "/"
               });
               break;
             case "openFile":

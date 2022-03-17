@@ -5,6 +5,7 @@
     const vscode = acquireVsCodeApi();
     var dataArray = [];
     var cachePath = "";
+    var batch_size = 8;
 
     window.onload = function (evnet) {
         vscode.postMessage({
@@ -20,9 +21,11 @@
                 cachePath = message.cachePath;
                 drawGraph();
                 drawSearchResults();
+                $('#input-search').focus();
                 break;
             case 'searchResults':
                 let data = message.data;
+                batch_size = data.batch_size;
                 dataArray[data.index].match = data.match;
                 drawSearchResults();
                 break;
@@ -116,7 +119,7 @@
             span.innerHTML = "0 Match(es)";
             fileContainer.appendChild(span);
 
-            let path = "vscode-resource:" + cachePath + item.hash + ".svg";
+            let path = "https://file+.vscode-resource.vscode-webview.net/" + cachePath + item.hash + ".svg";
             let image = createDom("img", {"src": path})
             rectangle.appendChild(image);
 
@@ -140,18 +143,18 @@
             } else if (item.match === null) {
                 // not set yet after init
                 rectangle.parent().find('span').text(' ')
-            } else if (Object.keys(item.match).length === 0) {
+            } else if (item.match.length === 0) {
                 // no results
                 rectangle.parent().find('span').text('No matches')
                 rectangle.parent().addClass('no-matches');
             } else {
                 // results
-                let matches = Object.keys(item.match).length;
+                let matches = item.match.length;
                 rectangle.parent().find('span').text(matches + (matches === 1 ? ' match' : ' matches'))
-                for (let i in item.match) {
-                    let line = createDom("div", { style: `position: absolute; top: ${i * 3 + 1}px; height: 2px; width: 100%;`, "data-index": index, "data-line": i, class: "match" });
+                item.match.forEach((value, i) => {
+                    let line = createDom("div", { style: `position: absolute; top: ${i * batch_size + 1}px; height: ${batch_size-1}px; width: 100%;`, "data-index": index, "data-line": value, class: "match" });
                     rectangle.append(line);
-                }
+                });
             }
         }
     }
