@@ -151,8 +151,10 @@
                 // results
                 let matches = item.match.length;
                 rectangle.parent().find('span').text(matches + (matches === 1 ? ' match' : ' matches'))
-                item.match.forEach((value, i) => {
-                    let line = createDom("div", { style: `position: absolute; top: ${i * batch_size + 1}px; height: ${batch_size-1}px; width: 100%;`, "data-index": index, "data-line": value, class: "match" });
+                let imageHeight = rectangle.children("img").first().height();
+                let height = imageHeight / item.lines * batch_size;
+                item.match.forEach(value => {
+                    let line = createDom("div", { style: `position: absolute; top: ${(value / batch_size) * height}px; height: ${height-1}px; width: 100%;`, "data-index": index, "data-line": value, class: "match" });
                     rectangle.append(line);
                 });
             }

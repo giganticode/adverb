@@ -4,8 +4,12 @@ import { Commands } from ".";
 
 export abstract class Command implements Disposable {
   private readonly _disposable: Disposable;
+  private needsActiveEditor: boolean;
+  private onlyForSupportedLanguages: boolean;
 
-  constructor(command: Commands) {
+  constructor(command: Commands, needsActiveEditor = true, onlyForSupportedLanguages = true) {
+    this.needsActiveEditor = needsActiveEditor;
+    this.onlyForSupportedLanguages = onlyForSupportedLanguages;
     this._disposable = commands.registerCommand(
       command,
       (...args: any[]) => this._execute(...args),
@@ -19,7 +23,9 @@ export abstract class Command implements Disposable {
 
   private _execute(...args: any[]) {
     const editor = window.activeTextEditor;
-    if (!editor || !SUPPORTED_LANGUAGES.includes(editor.document.languageId))
+    if (this.needsActiveEditor && !editor)
+      return;
+    if (this.onlyForSupportedLanguages && editor && !SUPPORTED_LANGUAGES.includes(editor.document.languageId))
       return;
     this.execute(editor, ...args)
   }

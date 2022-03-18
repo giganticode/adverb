@@ -30,7 +30,7 @@ export class SearchCommand extends Command {
   private CACHE_PATH: string;
 
   constructor(context: ExtensionContext) {
-    super(Commands.Search);
+    super(Commands.Search, false, false);
     this.context = context;
     this.CACHE_PATH = path.resolve(this.context.extensionPath, "resources", "images", "minimap");
   }
