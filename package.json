@@ -10,6 +10,7 @@
 		"Other"
 	],
 	"activationEvents": [
+		"onStartupFinished",
 		"onCommand:adverb.renameSingle",
 		"onCommand:adverb.renameAll",
 		"onCommand:adverb.fold",
@@ -264,7 +265,7 @@
 					"adverb.backendUrl": {
 						"type": "string",
 						"description": "Backend url",
-						"default": "http://127.0.0.1:8080"
+						"default": "http://127.0.0.1:8090"
 					},
 					"adverb.nameUrl": {
 						"type": "string",
@@ -280,6 +281,11 @@
 						"type": "string",
 						"description": "Search code with natural language url",
 						"default": "/api/search"
+					},
+					"adverb.searchIndexUrl": {
+						"type": "string",
+						"description": "Index workspace for search code url",
+						"default": "/api/search_index"
 					},
 					"adverb.excludeDirectories": {
 						"type": "array",
@@ -381,17 +387,17 @@
 		"lint": "eslint src --ext ts"
 	},
 	"devDependencies": {
-		"@types/babel__traverse": "^7.14.2",
-		"@types/node": "^17.0.23",
-		"@types/vscode": "^1.65.0",
-		"@typescript-eslint/eslint-plugin": "^5.16.0",
-		"@typescript-eslint/parser": "^5.16.0",
-		"eslint": "^8.12.0",
+		"@types/babel__traverse": "^7.17.0",
+		"@types/node": "^17.0.24",
+		"@types/vscode": "^1.66.0",
+		"@typescript-eslint/eslint-plugin": "^5.19.0",
+		"@typescript-eslint/parser": "^5.19.0",
+		"eslint": "^8.13.0",
 		"typescript": "^4.6.3"
 	},
 	"dependencies": {
-		"@babel/parser": "^7.17.8",
-		"@babel/traverse": "^7.17.3",
+		"@babel/parser": "^7.17.9",
+		"@babel/traverse": "^7.17.9",
 		"@babel/types": "^7.17.0",
 		"axios": "^0.26.1",
 		"recast": "^0.20.5",

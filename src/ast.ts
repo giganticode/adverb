@@ -137,6 +137,10 @@ const getFunctionDeclarations = (document: TextDocument): Range[] => {
             if (path.node.loc)
                 ranges.push(getRangeFromLoc(path.node.loc));
         },
+        ExportNamedDeclaration: function (path) {
+            if (path.node.declaration?.type === "FunctionDeclaration" && path.node.loc)
+                ranges.push(getRangeFromLoc(path.node.loc));
+        },
         FunctionDeclaration: function (path) {
             if (path.node.loc)
                 ranges.push(getRangeFromLoc(path.node.loc));

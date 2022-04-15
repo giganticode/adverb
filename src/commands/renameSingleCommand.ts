@@ -37,7 +37,7 @@ export class RenameSingleCommand extends Command {
     const renamingTypes = isFunction ? getRenamingTypes() : getRenamingTypes().filter(x => !x.onlyForFunctionNames);
     const code = isFunction ? getCodeForRange(editor.document, isFunction) : await getAllLinesContainingSymbol(editor, cursorPosition);
 
-    const newNames: { [key: number]: string } = {};
+    const newNames: { [key: number]: string | string[] } = {};
     async function getNewNames() {
       for (const x of renamingTypes.sort((a, b) => b.id - a.id)) {
         if (x.getNewNameFunction)
@@ -70,7 +70,7 @@ export class RenameSingleCommand extends Command {
         step: 2,
         totalSteps: 3,
         placeholder: "Choose a renaming technique",
-        items: renamingTypes.map(x => ({ id: x.id, label: x.description, detail: (newNames[x.id] ? `=> ${newNames[x.id]}` : "") })),
+        items: renamingTypes.map(x => ({ id: x.id, label: x.description, detail: (newNames[x.id] ? `=> ${Array.isArray(newNames[x.id]) ? (newNames[x.id] as string[]).join(", ") : newNames[x.id]}` : "") })),
         activeItem: state.renamingTechnique,
         shouldResume: shouldResume
       });
@@ -96,11 +96,23 @@ export class RenameSingleCommand extends Command {
         window.showErrorMessage("Error getting new name for symbol.");
         return;
       }
+      if(Array.isArray(newNames[state.renamingTechnique!.id as number])){
+        const pick = await input.showQuickPick({
+          title,
+          step: 2,
+          totalSteps: 3,
+          placeholder: "Choose a new name",
+          items: (newNames[state.renamingTechnique!.id as number] as string[]).map(x => ({id: x, label: x})),
+          activeItem: state.renamingTechnique,
+          shouldResume: shouldResume
+        });
+        state.newName = pick.label;
+      }
       state.newName = await input.showInputBox({
         title,
         step: 3,
         totalSteps: 3,
-        value: state.newName || (newNames[state.renamingTechnique!.id as number] ?? ""),
+        value: state.newName || (newNames[state.renamingTechnique!.id as number].toString() ?? ""),
         prompt: "New symbol name for '" + originalName + "'",
         validate: async (newName) => newName === originalName ? "Please choose a different name." : undefined,
         shouldResume: shouldResume

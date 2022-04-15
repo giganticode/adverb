@@ -39,6 +39,10 @@ export class Settings {
     return this.getBackendUrl() + Settings.configuration.get<string>("searchUrl", "/api/search");
   }
 
+  static getSearchIndexApiUrl(): string {
+    return this.getBackendUrl() + Settings.configuration.get<string>("searchIndexUrl", "/api/search_index");
+  }
+
   static getDirectoriesToExclude(): string[] {
     return Settings.configuration.get<string[]>("excludeDirectories", []);
   }

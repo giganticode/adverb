@@ -28,12 +28,28 @@ export class SearchCommand extends Command {
   private context: ExtensionContext;
   private dataArray: Item[] = [];
   private CACHE_PATH: string;
+  private index_name: string = "adverb";
 
   constructor(context: ExtensionContext) {
     super(Commands.Search, false, false);
     this.context = context;
     this.CACHE_PATH = path.resolve(this.context.extensionPath, "resources", "images", "minimap");
+    
+    this.getCachedWebViewContent();
+    this.indexAllFiles();
   }
+
+  private async indexAllFiles (){
+    const url = Settings.getSearchIndexApiUrl();
+    axios.post(url, {
+      content: this.directoryMap,
+      index_name: this.index_name
+    }).then((response: any) => {
+      console.log(response.data);
+    }).catch((err) => {
+      console.log(err);
+    })
+  } 
 
   async execute(editor: TextEditor, ...args: any[]) {
     let columnToShowIn: ViewColumn = (editor ? editor.viewColumn : ViewColumn.One) as ViewColumn;
@@ -208,7 +224,6 @@ export class SearchCommand extends Command {
     }).then((response: any) => {
       console.log(response.data);
       item.match = response.data.result.search_lines
-    }).catch(() => {
     }).finally(() => {
       const index = Object.keys(this.directoryMap).indexOf(item.relativePath);
       if (this.overviewPanel) {
