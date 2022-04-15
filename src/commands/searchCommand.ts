@@ -42,7 +42,7 @@ export class SearchCommand extends Command {
   private async indexAllFiles (){
     const url = Settings.getSearchIndexApiUrl();
     axios.post(url, {
-      content: this.directoryMap,
+      content: JSON.stringify(this.directoryMap),
       index_name: this.index_name
     }).then((response: any) => {
       console.log(response.data);
