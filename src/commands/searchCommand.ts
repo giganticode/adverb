@@ -213,22 +213,37 @@ export class SearchCommand extends Command {
     }
   }
 
-  private getSearchResultFromWebServie(item: Item, search_phrase: string) {
+  private getSearchResultFromColBERT(search_phrase: string) {
+    const url = Settings.getSearchApiUrl();
+    axios.post(url, {
+      search: search_phrase,
+      index_name: this.index_name
+    }).then((response: any) => {
+      console.log(response.data);
+    }).finally(() => {
+      // const index = Object.keys(this.directoryMap).indexOf(item.relativePath);
+      // if (this.overviewPanel) {
+      //   this.overviewPanel.webview.postMessage({ command: "searchResults", data: { index: index, match: item.match, batch_size: batch_size } });
+      // }
+    });
+  }
+
+  private getSearchResultFromWebService(item: Item, search_phrase: string) {
     const url = Settings.getSearchApiUrl();
     const batch_size = 8;
     item.match = [];
     axios.post(url, {
       content: item.content,
       search: search_phrase,
-      batch_size: batch_size
+      batch_size: batch_size,
+      index_name: this.index_name
     }).then((response: any) => {
       console.log(response.data);
       item.match = response.data.result.search_lines
     }).finally(() => {
       const index = Object.keys(this.directoryMap).indexOf(item.relativePath);
-      if (this.overviewPanel) {
+      if (this.overviewPanel)
         this.overviewPanel.webview.postMessage({ command: "searchResults", data: { index: index, match: item.match, batch_size: batch_size } });
-      }
     });
   }
 
@@ -267,10 +282,11 @@ export class SearchCommand extends Command {
               break;
             case "search":
               const search = message.value;
-              for (const key in this.directoryMap) {
-                const item = this.directoryMap[key];
-                this.getSearchResultFromWebServie(item, search);
-              }
+              this.getSearchResultFromColBERT(search);
+              // for (const key in this.directoryMap) {
+              //   const item = this.directoryMap[key];
+              //   this.getSearchResultFromWebService(item, search);
+              // }
               break;
           }
         },
