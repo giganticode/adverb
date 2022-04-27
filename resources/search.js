@@ -5,7 +5,6 @@
     const vscode = acquireVsCodeApi();
     var dataArray = [];
     var cachePath = "";
-    var batch_size = 8;
 
     window.onload = function (evnet) {
         vscode.postMessage({
@@ -25,8 +24,8 @@
                 break;
             case 'searchResults':
                 let data = message.data;
-                batch_size = data.batch_size;
                 dataArray[data.index].match = data.match;
+                dataArray[data.index].batch_size = data.batch_size;
                 drawSearchResults();
                 break;
         }
@@ -136,7 +135,6 @@
             let rectangle = $(`div.file[data-index=${index}]`);
             rectangle.find('div').remove();
             rectangle.parent().removeClass('no-matches');
-
             if (item.match === false) {
                 // processing
                 rectangle.parent().find('span').text('Processing...')
@@ -152,9 +150,9 @@
                 let matches = item.match.length;
                 rectangle.parent().find('span').text(matches + (matches === 1 ? ' match' : ' matches'))
                 let imageHeight = rectangle.children("img").first().height();
-                let height = imageHeight / item.lines * batch_size;
+                let height = imageHeight / item.lines * item.batch_size;
                 item.match.forEach(value => {
-                    let line = createDom("div", { style: `position: absolute; top: ${(value / batch_size) * height}px; height: ${height-1}px; width: 100%;`, "data-index": index, "data-line": value, class: "match" });
+                    let line = createDom("div", { style: `position: absolute; top: ${(value / item.batch_size) * height}px; height: ${height-1}px; width: 100%;`, "data-index": index, "data-line": value, class: "match" });
                     rectangle.append(line);
                 });
             }

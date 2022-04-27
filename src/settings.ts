@@ -23,6 +23,10 @@ export class Settings {
     return Settings.configuration.get<string>("renamingModel", "Salesforce/codet5-base");
   }
 
+  static getSearchModelType(): string {
+    return Settings.configuration.get<string>("searchModel", "stanford/ColBERT");
+  }
+
   static getBackendUrl(): string {
     return Settings.configuration.get<string>("backendUrl", "http://127.0.0.1:8080");
   }

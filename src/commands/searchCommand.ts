@@ -34,22 +34,28 @@ export class SearchCommand extends Command {
     super(Commands.Search, false, false);
     this.context = context;
     this.CACHE_PATH = path.resolve(this.context.extensionPath, "resources", "images", "minimap");
-    
+
     this.getCachedWebViewContent();
-    this.indexAllFiles();
+    if (Settings.getSearchModelType() === "stanford/ColBERT")
+      this.indexAllFiles();
+
+    workspace.onDidChangeConfiguration((event) => {
+      if (event.affectsConfiguration("adverb"))
+        if (Settings.getSearchModelType() === "stanford/ColBERT")
+          this.indexAllFiles();
+    });
   }
 
-  private async indexAllFiles (){
+  private async indexAllFiles() {
     const url = Settings.getSearchIndexApiUrl();
     axios.post(url, {
-      content: JSON.stringify(this.directoryMap),
+      content: JSON.stringify(this.dataArray),
       index_name: this.index_name
     }).then((response: any) => {
-      console.log(response.data);
     }).catch((err) => {
       console.log(err);
     })
-  } 
+  }
 
   async execute(editor: TextEditor, ...args: any[]) {
     let columnToShowIn: ViewColumn = (editor ? editor.viewColumn : ViewColumn.One) as ViewColumn;
@@ -93,32 +99,32 @@ export class SearchCommand extends Command {
     let extension = path.extname(filePath);
     if (Settings.getFileTypesToExclude().indexOf(extension) > -1)
       return;
-  
+
     let content = fs.readFileSync(filePath).toString();
     let lines = content.split(/\r\n|\r|\n/);
     let lineCount = lines.length;
     content = content.replace("\t", "    ");
     let lastModified = fs.statSync(filePath).mtime;
     let hash = Md5.hashStr(filePath) as string;
-  
+
     // Check if cached file exists
-    if(!fs.existsSync(this.CACHE_PATH))
-      fs.mkdirSync(this.CACHE_PATH, {recursive: true});
+    if (!fs.existsSync(this.CACHE_PATH))
+      fs.mkdirSync(this.CACHE_PATH, { recursive: true });
     let cachePath = path.join(this.CACHE_PATH, hash + ".svg");
     if (!fs.existsSync(cachePath) || fs.statSync(cachePath).mtime < lastModified) {
       // Cached file does not exists or is outdated -> create new one
-      let svg = `<svg width="75" height="${lineCount*3}" viewPort="0 0 32 48" xmlns="http://www.w3.org/2000/svg">`;
-  
+      let svg = `<svg width="75" height="${lineCount * 3}" viewPort="0 0 32 48" xmlns="http://www.w3.org/2000/svg">`;
+
       let y = 1;
       lines.forEach(function (line: string) {
-        let indent = (line.match(/^\s*/)||[""])[0].length;
+        let indent = (line.match(/^\s*/) || [""])[0].length;
         let length = Math.min(line.length - indent, 75);
-        svg += `<polygon points="${indent},${y} ${length},${y} ${length},${y+2} ${indent},${y+2}" fill="rgba(200,200,200,80)"/>`;
+        svg += `<polygon points="${indent},${y} ${length},${y} ${length},${y + 2} ${indent},${y + 2}" fill="rgba(200,200,200,80)"/>`;
         y += 3;
       });
-    
+
       svg += '</svg>';
-  
+
       fs.writeFileSync(cachePath, svg);
     }
   }
@@ -133,17 +139,17 @@ export class SearchCommand extends Command {
   private getWebviewContent() {
     if (!workspace.workspaceFolders)
       return "No workspace root defined";
-  
+
     const resourcePath = path.resolve(this.context.extensionPath, "resources");
     this.dataArray = [];
     this.initDirectoryMap();
     this.initCache();
-  
+
     for (const key in this.directoryMap) {
       const element = this.directoryMap[key];
       this.dataArray.push(element);
     }
-  
+
     const htmlPath = this.context.asAbsolutePath("./resources/search.html");
     const fileContent = fs.readFileSync(htmlPath).toString();
     const html = fileContent.replace(/script src="([^"]*)"/g, (match, src) => {
@@ -153,7 +159,7 @@ export class SearchCommand extends Command {
       const realSource = "vscode-resource:" + path.resolve(resourcePath, src);
       return `link href="${realSource}"`;
     });
-  
+
     return html;
   }
 
@@ -216,30 +222,41 @@ export class SearchCommand extends Command {
   private getSearchResultFromColBERT(search_phrase: string) {
     const url = Settings.getSearchApiUrl();
     axios.post(url, {
+      model: "colBERT",
       search: search_phrase,
+      content: JSON.stringify(this.dataArray),
       index_name: this.index_name
     }).then((response: any) => {
-      console.log(response.data);
-    }).finally(() => {
-      // const index = Object.keys(this.directoryMap).indexOf(item.relativePath);
-      // if (this.overviewPanel) {
-      //   this.overviewPanel.webview.postMessage({ command: "searchResults", data: { index: index, match: item.match, batch_size: batch_size } });
-      // }
+      if (this.overviewPanel) {
+        const results = this.dataArray.map((x, i) => ({ index: i, match: [], batch_size: x.lines }));
+        if (response.data && (response.data as []).length > 0) {
+          results.forEach(item => {
+            const result = (response.data as []).find(x => x["index"] === item.index);
+            if (result)
+              item.match = result["match"];
+            this.overviewPanel!.webview.postMessage({ command: "searchResults", data: item });
+          });
+        }
+      }
+    }).catch((err) => {
+      console.log(err);
     });
   }
 
-  private getSearchResultFromWebService(item: Item, search_phrase: string) {
+  private getSearchResultFromCodeBERT(item: Item, search_phrase: string) {
     const url = Settings.getSearchApiUrl();
     const batch_size = 8;
     item.match = [];
     axios.post(url, {
+      model: "codeBERT",
       content: item.content,
       search: search_phrase,
       batch_size: batch_size,
       index_name: this.index_name
     }).then((response: any) => {
-      console.log(response.data);
       item.match = response.data.result.search_lines
+    }).catch((err) => {
+      console.log(err);
     }).finally(() => {
       const index = Object.keys(this.directoryMap).indexOf(item.relativePath);
       if (this.overviewPanel)
@@ -282,11 +299,14 @@ export class SearchCommand extends Command {
               break;
             case "search":
               const search = message.value;
-              this.getSearchResultFromColBERT(search);
-              // for (const key in this.directoryMap) {
-              //   const item = this.directoryMap[key];
-              //   this.getSearchResultFromWebService(item, search);
-              // }
+              if (Settings.getSearchModelType() === "stanford/ColBERT")
+                this.getSearchResultFromColBERT(search);
+              else {
+                for (const key in this.directoryMap) {
+                  const item = this.directoryMap[key];
+                  this.getSearchResultFromCodeBERT(item, search);
+                }
+              }
               break;
           }
         },
