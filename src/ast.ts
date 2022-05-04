@@ -1,4 +1,4 @@
-import { commands, DecorationOptions, Location, Position, Range, TextDocument, TextEditor, ThemeColor, Uri, window } from "vscode";
+import { commands, DecorationOptions, DocumentHighlight, Location, Position, Range, TextDocument, TextEditor, ThemeColor, Uri, window } from "vscode";
 import { parse as babelParse } from "@babel/parser";
 import traverse from "@babel/traverse";
 import * as recast from "recast";
@@ -119,8 +119,15 @@ const highlightSymbolDefinitions = async (editor: TextEditor | undefined, curren
         for (let range of ranges) {
             if (visibleRows.has(range[1].start.line))
                 visibleRanges.push(range[1]);
-            else
-                notVisibleRanges.push(createAnnotation(` [D-Line ${range[1].start.line + 1}]`, range[0], "after"));
+            else{
+                const word = editor.document.getText(range[0]);
+                const lineRange = editor.document.lineAt(range[0].start.line).range;
+                const startPosition = new Position(lineRange.start.line, 0);
+                const endPosition = new Position(lineRange.start.line, lineRange.end.character);
+                const startRange = new Range(startPosition, endPosition);
+                range[0] = startRange;
+                notVisibleRanges.push(createAnnotation(`${word} [Def. at ${range[1].start.line + 1}]`, range[0], "after"));
+            }
         }
         editor.setDecorations(highlightVisibleDefinitionsDecorationType, visibleRanges);
         editor.setDecorations(highlightNotVisibleDefinitionsDecorationType, notVisibleRanges);
