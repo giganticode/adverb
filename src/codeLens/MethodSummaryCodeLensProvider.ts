@@ -10,7 +10,7 @@ export class MethodSummaryCodeLensProvider implements CodeLensProvider {
     public readonly onDidChangeCodeLenses: Event<void> = this._onDidChangeCodeLenses.event;
 
     private codeLenses: CodeLens[] = [];
-    private currentlyProcessing: Range[] = [];
+    // private currentlyProcessing: Range[] = [];
 
     constructor() {
         workspace.onDidChangeConfiguration((event) => {
@@ -18,9 +18,10 @@ export class MethodSummaryCodeLensProvider implements CodeLensProvider {
                 this._onDidChangeCodeLenses.fire();
         });
 
-        // workspace.onDidChangeTextDocument((event) => {
-        //     Cache.cleanCodeLensCacheOfDocument(event.document.fileName, Math.min(...event.contentChanges.map(x => x.range.start.line)));
-        // });
+        workspace.onDidChangeTextDocument((event) => {
+            console.log("Change text document (clear code lens cache).");
+            Cache.cleanCodeLensCacheOfDocument(event.document.fileName, Math.min(...event.contentChanges.map(x => x.range.start.line)));
+        });
 
         workspace.onDidSaveTextDocument(() => {
             this._onDidChangeCodeLenses.fire();
@@ -35,7 +36,7 @@ export class MethodSummaryCodeLensProvider implements CodeLensProvider {
                 // .filter(range => !this.currentlyProcessing.some(x => x.isEqual(range)))
                 .map(range => {
                     const cachedCodeLens = documentCache?.find(x => x.range === range);
-                    return new CodeLens(range, cachedCodeLens?.command); 
+                    return new CodeLens(range, cachedCodeLens?.command);
                 });
             return this.codeLenses;
         }
@@ -44,10 +45,14 @@ export class MethodSummaryCodeLensProvider implements CodeLensProvider {
 
     public resolveCodeLens(codeLens: CodeLens) {
         const editor = window.activeTextEditor;
+        codeLens.command = {
+            title: "",
+            command: ""
+        };
         if (editor?.document) {
-            // const cachedSummary = Cache.getCodeLensCacheOfDocumentAndCodeBlock(editor.document.fileName, codeLens.range);
-            // if (cachedSummary)
-            //     return codeLens;
+            const cachedSummary = Cache.getCodeLensCacheOfDocumentAndCodeBlock(editor.document.fileName, codeLens.range);
+            if (cachedSummary)
+                return codeLens;
             // if (this.currentlyProcessing.some(x => x.isEqual(codeLens.range))) //TODO: remove this
             //     return Promise.reject<CodeLens>(undefined);
             // this.currentlyProcessing.push(codeLens.range);
@@ -56,19 +61,20 @@ export class MethodSummaryCodeLensProvider implements CodeLensProvider {
                 content += editor.document.lineAt(i).text + "\n";
             }
             console.log(`API summary request for line range ${codeLens.range.start.line + 1}-${codeLens.range.end.line + 1}`)
-            return getCodeSummary(content).then((summary) => {
-                if (summary) {
-                    codeLens.command = {
-                        title: summary,
-                        tooltip: "Click to fold or to add summary as comment",
-                        command: Commands.FoldOrComment,
-                        arguments: [codeLens.range.start.line, codeLens.range.end.line, summary]
+            return getCodeSummary(content)
+                .then((summary) => {
+                    if (summary) {
+                        codeLens.command = {
+                            title: summary,
+                            tooltip: "Click to fold or to add summary as comment",
+                            command: Commands.FoldOrComment,
+                            arguments: [codeLens.range.start.line, codeLens.range.end.line, summary]
+                        };
+                        Cache.updateCodeLensCacheOfDocumentAndCodeBlock(editor.document.fileName, codeLens.range, codeLens.command);
+                        // this.currentlyProcessing = this.currentlyProcessing.filter(x => !x.isEqual(codeLens.range));
                     }
-                    // Cache.updateCodeLensCacheOfDocumentAndCodeBlock(editor.document.fileName, codeLens.range, codeLens.command);
-                    // this.currentlyProcessing = this.currentlyProcessing.filter(x => !x.isEqual(codeLens.range));
-                }
-                return codeLens;
-            });
+                    return codeLens;
+                });
         }
         return codeLens;
     };

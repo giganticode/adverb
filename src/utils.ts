@@ -109,11 +109,10 @@ export const hashCode = (code: string): number => {
 
 export const getCodeForRange = (document: TextDocument, range: Range): string => {
   let content: string = "";
-  for (let i = range.start.line; i <= range.end.line; i++) {
+  for (let i = range.start.line; i <= range.end.line; i++)
     content += document.lineAt(i).text + "\n";
-  }
   if (content.endsWith("\n"))
-    content = content.substring(0, content.length - 2);
+    content = content.substring(0, content.length - 1);
   return content;
 };
 

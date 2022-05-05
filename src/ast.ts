@@ -119,7 +119,7 @@ const highlightSymbolDefinitions = async (editor: TextEditor | undefined, curren
         for (let range of ranges) {
             if (visibleRows.has(range[1].start.line))
                 visibleRanges.push(range[1]);
-            else{
+            else {
                 const word = editor.document.getText(range[0]);
                 const lineRange = editor.document.lineAt(range[0].start.line).range;
                 const startPosition = new Position(lineRange.start.line, 0);
@@ -141,7 +141,9 @@ const getFunctionDeclarations = (document: TextDocument): Range[] => {
     const ranges: Range[] = [];
     traverse(ast, {
         ArrowFunctionExpression: function (path) {
-            if (path.node.loc)
+            if (path.parent.type === "AssignmentExpression" && path.parent.loc)
+                ranges.push(getRangeFromLoc(path.parent.loc));
+            else if (path.node.loc)
                 ranges.push(getRangeFromLoc(path.node.loc));
         },
         ExportNamedDeclaration: function (path) {
@@ -153,7 +155,9 @@ const getFunctionDeclarations = (document: TextDocument): Range[] => {
                 ranges.push(getRangeFromLoc(path.node.loc));
         },
         FunctionExpression: function (path) {
-            if (path.node.loc)
+            if (path.parent.type === "AssignmentExpression" && path.parent.loc)
+                ranges.push(getRangeFromLoc(path.parent.loc));
+            else if (path.node.loc)
                 ranges.push(getRangeFromLoc(path.node.loc));
         },
         ClassMethod: function (path) {
@@ -213,8 +217,11 @@ const getRangeOfFunctionSymbol = (editor: TextEditor, name: string): Range | und
                 result = getRangeFromLoc(path.node.loc);
                 path.stop();
             }
-            if (path.isFunctionDeclaration() && path.node.loc && path.node.id?.type === "Identifier" && path.node.id?.name === name) {
-                result = getRangeFromLoc(path.node.loc);
+            if (path.isFunctionDeclaration() && (path.node.loc || path.node.body.loc) && path.node.id?.type === "Identifier" && path.node.id?.name === name) {
+                if (path.node.loc)
+                    result = getRangeFromLoc(path.node.loc);
+                else if (path.node.body.loc)
+                    result = getRangeFromLoc(path.node.body.loc);
                 path.stop();
             }
             if (path.isClassMethod() && path.node.loc && path.node.key?.type === "Identifier" && path.node.key?.name === name) {

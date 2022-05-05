@@ -22,6 +22,11 @@ export const getSymbolName = async (symbolName: string, code: string, showProgre
     }
     else
         code = code.replace(symbolName, "<mask>");
+    const uselessWords = ["private", "public", "self.", "this."]
+    uselessWords.forEach(n => code = code.replace(n, ""));
+    if(!code.split("\n")[0].toLocaleLowerCase().includes("function"))
+        code = "function " + code;
+    code = code.trim();
     return showProgress ?
         window.withProgress({
             location: ProgressLocation.Notification,
