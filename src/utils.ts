@@ -113,7 +113,7 @@ export const getCodeForRange = (document: TextDocument, range: Range): string =>
     content += document.lineAt(i).text + "\n";
   }
   if (content.endsWith("\n"))
-    content = content.substring(0, content.length - 3);
+    content = content.substring(0, content.length - 2);
   return content;
 };
 

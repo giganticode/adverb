@@ -1,4 +1,4 @@
-import { commands, DecorationOptions, DocumentHighlight, Location, Position, Range, TextDocument, TextEditor, ThemeColor, Uri, window } from "vscode";
+import { commands, DecorationOptions, Location, Position, Range, TextDocument, TextEditor, ThemeColor, Uri, window } from "vscode";
 import { parse as babelParse } from "@babel/parser";
 import traverse from "@babel/traverse";
 import * as recast from "recast";
@@ -126,7 +126,7 @@ const highlightSymbolDefinitions = async (editor: TextEditor | undefined, curren
                 const endPosition = new Position(lineRange.start.line, lineRange.end.character);
                 const startRange = new Range(startPosition, endPosition);
                 range[0] = startRange;
-                notVisibleRanges.push(createAnnotation(`${word} [Def. at ${range[1].start.line + 1}]`, range[0], "after"));
+                notVisibleRanges.push(createAnnotation(`\t"${word}" [Def.: line ${range[1].start.line + 1}]`, range[0], "after"));
             }
         }
         editor.setDecorations(highlightVisibleDefinitionsDecorationType, visibleRanges);
