@@ -24,7 +24,8 @@ export const getSymbolName = async (symbolName: string, code: string, showProgre
         code = code.replace(symbolName, "<mask>");
     const uselessWords = ["private", "public", "self.", "this."]
     uselessWords.forEach(n => code = code.replace(n, ""));
-    if(!code.split("\n")[0].toLocaleLowerCase().includes("function"))
+    const codeParts = code.split("\n");
+    if(codeParts.length > 0 && !codeParts[0].toLocaleLowerCase().includes("function") && !codeParts[0].toLocaleLowerCase().includes("=>"))
         code = "function " + code;
     code = code.trim();
     return showProgress ?

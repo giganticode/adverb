@@ -95,7 +95,7 @@ export class SearchCommand extends Command {
     }
   }
 
-  private generateSVGFromPath(filePath: string) {
+  private generateSVGFromPath(filePath: string, hash: string) {
     let extension = path.extname(filePath);
     if (Settings.getFileTypesToExclude().indexOf(extension) > -1)
       return;
@@ -105,7 +105,6 @@ export class SearchCommand extends Command {
     let lineCount = lines.length;
     content = content.replace("\t", "    ");
     let lastModified = fs.statSync(filePath).mtime;
-    let hash = Md5.hashStr(filePath) as string;
 
     // Check if cached file exists
     if (!fs.existsSync(this.CACHE_PATH))
@@ -167,7 +166,7 @@ export class SearchCommand extends Command {
     try {
       for (let file in this.directoryMap) {
         let item = this.directoryMap[file];
-        this.generateSVGFromPath(item.path);
+        this.generateSVGFromPath(item.path, item.hash);
       }
     } catch {
     }

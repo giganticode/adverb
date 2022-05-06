@@ -1,7 +1,7 @@
 import { CodeLens, CodeLensProvider, Event, EventEmitter, ProviderResult, Range, TextDocument, window, workspace } from "vscode";
 import { getCodeSummary } from "../api";
 import ast from "../ast";
-import { Cache } from "../cache";
+// import { Cache } from "../cache";
 import { Commands } from "../commands";
 import { Settings } from "../settings";
 
@@ -18,10 +18,10 @@ export class MethodSummaryCodeLensProvider implements CodeLensProvider {
                 this._onDidChangeCodeLenses.fire();
         });
 
-        workspace.onDidChangeTextDocument((event) => {
-            console.log("Change text document (clear code lens cache).");
-            Cache.cleanCodeLensCacheOfDocument(event.document.fileName, Math.min(...event.contentChanges.map(x => x.range.start.line)));
-        });
+        // workspace.onDidChangeTextDocument((event) => {
+        //     console.log("Change text document (clear code lens cache).");
+        //     Cache.cleanCodeLensCacheOfDocument(event.document.fileName, Math.min(...event.contentChanges.map(x => x.range.start.line)));
+        // });
 
         workspace.onDidSaveTextDocument(() => {
             this._onDidChangeCodeLenses.fire();
@@ -30,14 +30,15 @@ export class MethodSummaryCodeLensProvider implements CodeLensProvider {
 
     public provideCodeLenses(document: TextDocument): ProviderResult<CodeLens[]> {
         if (Settings.areCodeLensEnabled() && !document.isDirty) {
-            const documentCache = Cache.getCodeLensCacheOfDocument(document.fileName);
             const ranges: Range[] = ast.getFunctionDeclarations(document);
-            this.codeLenses = ranges
-                // .filter(range => !this.currentlyProcessing.some(x => x.isEqual(range)))
-                .map(range => {
-                    const cachedCodeLens = documentCache?.find(x => x.range === range);
-                    return new CodeLens(range, cachedCodeLens?.command);
-                });
+            // const documentCache = Cache.getCodeLensCacheOfDocument(document.fileName);
+            // this.codeLenses = ranges
+            // .filter(range => !this.currentlyProcessing.some(x => x.isEqual(range)))
+            // .map(range => {
+            //     const cachedCodeLens = documentCache?.find(x => x.range === range);
+            //     return new CodeLens(range, cachedCodeLens?.command);
+            // });
+            this.codeLenses = ranges.map(x => new CodeLens(x, undefined));
             return this.codeLenses;
         }
         return undefined;
@@ -50,9 +51,9 @@ export class MethodSummaryCodeLensProvider implements CodeLensProvider {
             command: ""
         };
         if (editor?.document) {
-            const cachedSummary = Cache.getCodeLensCacheOfDocumentAndCodeBlock(editor.document.fileName, codeLens.range);
-            if (cachedSummary)
-                return codeLens;
+            // const cachedSummary = Cache.getCodeLensCacheOfDocumentAndCodeBlock(editor.document.fileName, codeLens.range);
+            // if (cachedSummary)
+            //     return codeLens;
             // if (this.currentlyProcessing.some(x => x.isEqual(codeLens.range))) //TODO: remove this
             //     return Promise.reject<CodeLens>(undefined);
             // this.currentlyProcessing.push(codeLens.range);
@@ -70,7 +71,7 @@ export class MethodSummaryCodeLensProvider implements CodeLensProvider {
                             command: Commands.FoldOrComment,
                             arguments: [codeLens.range.start.line, codeLens.range.end.line, summary]
                         };
-                        Cache.updateCodeLensCacheOfDocumentAndCodeBlock(editor.document.fileName, codeLens.range, codeLens.command);
+                        // Cache.updateCodeLensCacheOfDocumentAndCodeBlock(editor.document.fileName, codeLens.range, codeLens.command);
                         // this.currentlyProcessing = this.currentlyProcessing.filter(x => !x.isEqual(codeLens.range));
                     }
                     return codeLens;
