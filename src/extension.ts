@@ -23,19 +23,19 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(new RenameSingleCommand());
   context.subscriptions.push(new SearchCommand(context));
 
-  context.subscriptions.push(globalTreeViewProvider);
-  context.subscriptions.push(localTreeViewProvider);
+  // context.subscriptions.push(globalTreeViewProvider);
+  // context.subscriptions.push(localTreeViewProvider);
 
-  if (Settings.areCodeLensEnabled()) {
-    vscode.languages.registerCodeLensProvider(SUPPORTED_LANGUAGES, new MethodSummaryCodeLensProvider());
-    context.subscriptions.push(new FoldOrCommentCommand());
-  }
-  if (Settings.areFileDecorationsEnabled())
-    vscode.window.registerFileDecorationProvider(fileDecorationProvider);
+  // if (Settings.areCodeLensEnabled()) {
+  //   vscode.languages.registerCodeLensProvider(SUPPORTED_LANGUAGES, new MethodSummaryCodeLensProvider());
+  //   context.subscriptions.push(new FoldOrCommentCommand());
+  // }
+  // if (Settings.areFileDecorationsEnabled())
+  //   vscode.window.registerFileDecorationProvider(fileDecorationProvider);
 
-  registerEvents(context);
+  // registerEvents(context);
 
-  refreshRenamings();
+  // refreshRenamings();
 };
 
 export function deactivate() { };

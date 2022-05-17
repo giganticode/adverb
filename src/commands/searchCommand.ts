@@ -219,47 +219,61 @@ export class SearchCommand extends Command {
   }
 
   private getSearchResultFromColBERT(search_phrase: string) {
+    if (!this.overviewPanel)
+      return;
     const url = Settings.getSearchApiUrl();
+    const batch_size = 30;
+    const results = this.dataArray.map((x, i) => ({ index: i, match: [], batch_size: batch_size }));
     axios.post(url, {
       model: "colBERT",
       search: search_phrase,
       content: JSON.stringify(this.dataArray),
       index_name: this.index_name
     }).then((response: any) => {
-      if (this.overviewPanel) {
-        const results = this.dataArray.map((x, i) => ({ index: i, match: [], batch_size: x.lines }));
-        if (response.data && (response.data as []).length > 0) {
-          results.forEach(item => {
-            const result = (response.data as []).find(x => x["index"] === item.index);
-            if (result)
-              item.match = result["match"];
-            this.overviewPanel!.webview.postMessage({ command: "searchResults", data: item });
-          });
-        }
+      if (response.data && (response.data as []).length > 0) {
+        results.forEach(item => {
+          const result = (response.data as []).find(x => x["index"] === item.index);
+          if (result) {
+            item.match = result["match"];
+            item.batch_size = result["lines"];
+          }
+          this.overviewPanel!.webview.postMessage({ command: "searchResults", data: item });
+        });
       }
     }).catch((err) => {
       console.log(err);
+      results.forEach(item =>
+        this.overviewPanel!.webview.postMessage({ command: "searchResults", data: item })
+      );
     });
   }
 
-  private getSearchResultFromCodeBERT(item: Item, search_phrase: string) {
+  private getSearchResultFromCodeBERT(search_phrase: string) {
+    if (!this.overviewPanel)
+      return;
     const url = Settings.getSearchApiUrl();
-    const batch_size = 8;
-    item.match = [];
+    const batch_size = 30;
+    const results = this.dataArray.map((x, i) => ({ index: i, match: [], batch_size: batch_size }));
     axios.post(url, {
       model: "codeBERT",
-      content: item.content,
       search: search_phrase,
-      batch_size: batch_size,
-      index_name: this.index_name
+      content: JSON.stringify(this.dataArray),
+      batch_size: batch_size
     }).then((response: any) => {
-      item.match = response.data.result.search_lines
+      if (response.data && (response.data as []).length > 0) {
+        results.forEach(item => {
+          console.log(item);
+          const result = (response.data as []).find(x => x["index"] === item.index);
+          if (result)
+            item.match = result["match"];
+          this.overviewPanel!.webview.postMessage({ command: "searchResults", data: item });
+        });
+      }
     }).catch((err) => {
       console.log(err);
-    }).finally(() => {
-      const index = Object.keys(this.directoryMap).indexOf(item.relativePath);
-      if (this.overviewPanel)
-        this.overviewPanel.webview.postMessage({ command: "searchResults", data: { index: index, match: item.match, batch_size: batch_size } });
+      results.forEach(item =>
+        this.overviewPanel!.webview.postMessage({ command: "searchResults", data: item })
+      );
     });
   }
 
@@ -300,12 +314,8 @@ export class SearchCommand extends Command {
               const search = message.value;
               if (Settings.getSearchModelType() === "stanford/ColBERT")
                 this.getSearchResultFromColBERT(search);
-              else {
-                for (const key in this.directoryMap) {
-                  const item = this.directoryMap[key];
-                  this.getSearchResultFromCodeBERT(item, search);
-                }
-              }
+              else
+                this.getSearchResultFromCodeBERT(search);
               break;
           }
         },
