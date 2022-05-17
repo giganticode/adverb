@@ -231,6 +231,8 @@ export class SearchCommand extends Command {
       index_name: this.index_name
     }).then((response: any) => {
       if (response.data && (response.data as []).length > 0) {
+        const stringl = (response.data as []).map(x => path.basename(this.dataArray[x["index"]]["relativePath"]) + " - " + x["score"] + "\n");
+        console.log(stringl.toString());
         results.forEach(item => {
           const result = (response.data as []).find(x => x["index"] === item.index);
           if (result) {
@@ -252,8 +254,8 @@ export class SearchCommand extends Command {
     if (!this.overviewPanel)
       return;
     const url = Settings.getSearchApiUrl();
-    const batch_size = 30;
-    const results = this.dataArray.map((x, i) => ({ index: i, match: [], batch_size: batch_size }));
+    const batch_size = 40;
+    const results = this.dataArray.map((x, i) => ({ index: i, relativePath: x.relativePath, match: [], batch_size: batch_size }));
     axios.post(url, {
       model: "codeBERT",
       search: search_phrase,
@@ -261,11 +263,12 @@ export class SearchCommand extends Command {
       batch_size: batch_size
     }).then((response: any) => {
       if (response.data && (response.data as []).length > 0) {
+        const stringl = (response.data as []).map(x => path.basename(x["relativePath"]) + " - " + JSON.stringify(x["match"]) + "\n");
+        console.log(stringl.toString());
         results.forEach(item => {
-          console.log(item);
-          const result = (response.data as []).find(x => x["index"] === item.index);
+          const result = (response.data as []).find(x => x["relativePath"] === item.relativePath);
           if (result)
-            item.match = result["match"];
+            item.match = (result["match"] as []).map(x => x["line"]);
           this.overviewPanel!.webview.postMessage({ command: "searchResults", data: item });
         });
       }
