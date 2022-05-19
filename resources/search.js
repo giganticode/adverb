@@ -118,7 +118,7 @@
             span.innerHTML = "0 Match(es)";
             fileContainer.appendChild(span);
 
-            let path = "https://file+.vscode-resource.vscode-webview.net/" + cachePath + item.hash + ".svg";
+            let path = "vscode-resource:" + cachePath + item.hash + ".svg"; //"https://file+.vscode-resource.vscode-webview.net/" + 
             let image = createDom("img", {"src": path})
             rectangle.appendChild(image);
 

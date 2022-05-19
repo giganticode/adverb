@@ -49,7 +49,7 @@ export class SearchCommand extends Command {
   private async indexAllFiles() {
     const url = Settings.getSearchIndexApiUrl();
     axios.post(url, {
-      content: JSON.stringify(this.dataArray),
+      content: JSON.stringify(this.dataArray.slice(0, this.dataArray.length - 1)),
       index_name: this.index_name
     }).then((response: any) => {
     }).catch((err) => {
@@ -290,7 +290,7 @@ export class SearchCommand extends Command {
               this.overviewPanel!.webview.postMessage({
                 command: "init",
                 data: this.dataArray,
-                cachePath: this.CACHE_PATH.replace(new RegExp("\\\\"), "/") + "/"
+                cachePath: this.CACHE_PATH.replace(new RegExp(/\\/g), "/") + "/",
               });
               break;
             case "openFile":
