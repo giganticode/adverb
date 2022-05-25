@@ -49,7 +49,7 @@ export class SearchCommand extends Command {
   private async indexAllFiles() {
     const url = Settings.getSearchIndexApiUrl();
     axios.post(url, {
-      content: JSON.stringify(this.dataArray.slice(0, this.dataArray.length - 1)),
+      content: JSON.stringify(this.dataArray),
       index_name: this.index_name
     }).then((response: any) => {
     }).catch((err) => {
@@ -222,7 +222,7 @@ export class SearchCommand extends Command {
     if (!this.overviewPanel)
       return;
     const url = Settings.getSearchApiUrl();
-    const batch_size = 30;
+    const batch_size = 8;
     const results = this.dataArray.map((x, i) => ({ index: i, match: [], batch_size: batch_size }));
     axios.post(url, {
       model: "colBERT",
@@ -254,7 +254,7 @@ export class SearchCommand extends Command {
     if (!this.overviewPanel)
       return;
     const url = Settings.getSearchApiUrl();
-    const batch_size = 40;
+    const batch_size = 1;
     const results = this.dataArray.map((x, i) => ({ index: i, relativePath: x.relativePath, match: [], batch_size: batch_size }));
     axios.post(url, {
       model: "codeBERT",
