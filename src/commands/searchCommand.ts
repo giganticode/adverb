@@ -1,5 +1,4 @@
 import axios from "axios";
-import { X509Certificate } from "crypto";
 import * as fs from "fs";
 import * as path from "path";
 import { Md5 } from "ts-md5";
@@ -35,7 +34,7 @@ export class SearchCommand extends Command {
   constructor(context: ExtensionContext) {
     super(Commands.Search, false, false);
     this.context = context;
-    this.CACHE_PATH = path.resolve(this.context.extensionPath, "resources", "images", "minimap");
+    this.CACHE_PATH = path.join(this.context.extensionPath, "resources", "images", "minimap");
 
     this.getCachedWebViewContent();
     if (Settings.getSearchModelType() === "stanford/ColBERT")
@@ -78,7 +77,7 @@ export class SearchCommand extends Command {
           retainContextWhenHidden: true,
           localResourceRoots: [
             Uri.file(path.join(this.context.extensionPath, "resources")),
-            Uri.file(path.join(this.context.extensionPath, "resources", "images", "minimap"))
+            Uri.file(this.CACHE_PATH)
           ]
         }
       );
@@ -289,13 +288,13 @@ export class SearchCommand extends Command {
         message => {
           switch (message.command) {
             case "init":
-              // send files to webview
               this.dataArray = this.dataArray.map(x => {
-                const local_path = Uri.file(path.join(this.context.extensionPath, "resources", "images", "minimap", x.hash + ".svg"));
+                const local_path = Uri.file(path.join(this.CACHE_PATH, x.hash + ".svg"));
                 const uri = this.overviewPanel!.webview.asWebviewUri(local_path);
                 x.imagePath = uri.toString();
                 return x;
               });
+              // send files to webview
               this.overviewPanel!.webview.postMessage({
                 command: "init",
                 data: this.dataArray

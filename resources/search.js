@@ -7,7 +7,7 @@
         vscode.postMessage({
             command: 'init'
         });
-    }
+    };
 
     window.addEventListener('message', event => {
         const message = event.data;
@@ -26,13 +26,12 @@
                 drawSearchResults();
                 break;
         }
-
     });
 
     $('#container').on('click', '.file:not(.match)', function (e) {
         if (!$(e.target).hasClass('match')) {
             let index = $(this).attr('data-index');
-            openFile(index, undefined);
+            openFile(index, 0);
         }
     });
 
