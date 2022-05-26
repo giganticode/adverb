@@ -1,10 +1,7 @@
 ; (function () {
 
-
-
     const vscode = acquireVsCodeApi();
     var dataArray = [];
-    var cachePath = "";
 
     window.onload = function (evnet) {
         vscode.postMessage({
@@ -17,7 +14,6 @@
         switch (message.command) {
             case 'init':
                 dataArray = message.data;
-                cachePath = message.cachePath;
                 drawGraph();
                 drawSearchResults();
                 $('#input-search').focus();
@@ -26,6 +22,7 @@
                 let data = message.data;
                 dataArray[data.index].match = data.match;
                 dataArray[data.index].batch_size = data.batch_size;
+                dataArray[data.index].lines = data.lines;
                 drawSearchResults();
                 break;
         }
@@ -35,7 +32,7 @@
     $('#container').on('click', '.file:not(.match)', function (e) {
         if (!$(e.target).hasClass('match')) {
             let index = $(this).attr('data-index');
-            openFile(index);
+            openFile(index, undefined);
         }
     });
 
@@ -118,8 +115,8 @@
             span.innerHTML = "0 Match(es)";
             fileContainer.appendChild(span);
 
-            let path = "vscode-resource:" + cachePath + item.hash + ".svg"; //"https://file+.vscode-resource.vscode-webview.net/" + 
-            let image = createDom("img", {"src": path})
+            // let path = "vscode-resource:" + cachePath + item.hash + ".svg"; //"https://file+.vscode-resource.vscode-webview.net/" + 
+            let image = createDom("img", {"src": item.imagePath})
             rectangle.appendChild(image);
 
             let text = createDom("p", { "style": `transform: rotate(90deg) translateX(100%); position: absolute; right: 25px; top: -15px; transform-origin: 100% 100%; margin: 0;` });

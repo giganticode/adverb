@@ -1,9 +1,3 @@
-class Test {
-    test(){
-        console.log("this is a test method.");
-    }
-}
-
 class Cell {
     shipIndex: number;
     hasHit: boolean;

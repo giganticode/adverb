@@ -1,4 +1,5 @@
 import axios from "axios";
+import { X509Certificate } from "crypto";
 import * as fs from "fs";
 import * as path from "path";
 import { Md5 } from "ts-md5";
@@ -19,6 +20,7 @@ interface Item {
   match: object | null | false;
   lastModified: Date;
   hash: string;
+  imagePath: string;
 }
 
 export class SearchCommand extends Command {
@@ -41,16 +43,18 @@ export class SearchCommand extends Command {
 
     workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration("adverb"))
-        if (Settings.getSearchModelType() === "stanford/ColBERT")
+        if (Settings.getSearchModelType() !== "stanford/ColBERT") //old value check...
           this.indexAllFiles();
     });
   }
 
   private async indexAllFiles() {
     const url = Settings.getSearchIndexApiUrl();
+    const batch_size = 1;
     axios.post(url, {
       content: JSON.stringify(this.dataArray),
-      index_name: this.index_name
+      index_name: this.index_name,
+      batch_size: batch_size
     }).then((response: any) => {
     }).catch((err) => {
       console.log(err);
@@ -222,23 +226,22 @@ export class SearchCommand extends Command {
     if (!this.overviewPanel)
       return;
     const url = Settings.getSearchApiUrl();
-    const batch_size = 8;
-    const results = this.dataArray.map((x, i) => ({ index: i, match: [], batch_size: batch_size }));
+    const batch_size = 1;
+    const results = this.dataArray.map((x, i) => ({ index: i, relativePath: x.relativePath, match: [], lines: x.lines, batch_size: batch_size }));
     axios.post(url, {
       model: "colBERT",
       search: search_phrase,
       content: JSON.stringify(this.dataArray),
-      index_name: this.index_name
+      index_name: this.index_name,
+      batch_size: batch_size
     }).then((response: any) => {
       if (response.data && (response.data as []).length > 0) {
-        const stringl = (response.data as []).map(x => path.basename(this.dataArray[x["index"]]["relativePath"]) + " - " + x["score"] + "\n");
+        const stringl = (response.data as []).map(x => path.basename(x["relativePath"]) + " - " + JSON.stringify(x["match"]) + "\n");
         console.log(stringl.toString());
         results.forEach(item => {
-          const result = (response.data as []).find(x => x["index"] === item.index);
-          if (result) {
-            item.match = result["match"];
-            item.batch_size = result["lines"];
-          }
+          const result = (response.data as []).find(x => x["relativePath"] === item.relativePath);
+          if (result)
+            item.match = (result["match"] as []).map(x => x["line"]);
           this.overviewPanel!.webview.postMessage({ command: "searchResults", data: item });
         });
       }
@@ -255,7 +258,7 @@ export class SearchCommand extends Command {
       return;
     const url = Settings.getSearchApiUrl();
     const batch_size = 1;
-    const results = this.dataArray.map((x, i) => ({ index: i, relativePath: x.relativePath, match: [], batch_size: batch_size }));
+    const results = this.dataArray.map((x, i) => ({ index: i, relativePath: x.relativePath, match: [], lines: x.lines, batch_size: batch_size }));
     axios.post(url, {
       model: "codeBERT",
       search: search_phrase,
@@ -287,10 +290,15 @@ export class SearchCommand extends Command {
           switch (message.command) {
             case "init":
               // send files to webview
+              this.dataArray = this.dataArray.map(x => {
+                const local_path = Uri.file(path.join(this.context.extensionPath, "resources", "images", "minimap", x.hash + ".svg"));
+                const uri = this.overviewPanel!.webview.asWebviewUri(local_path);
+                x.imagePath = uri.toString();
+                return x;
+              });
               this.overviewPanel!.webview.postMessage({
                 command: "init",
-                data: this.dataArray,
-                cachePath: this.CACHE_PATH.replace(new RegExp(/\\/g), "/") + "/",
+                data: this.dataArray
               });
               break;
             case "openFile":
