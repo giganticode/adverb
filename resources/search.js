@@ -19,10 +19,7 @@
                 $('#input-search').focus();
                 break;
             case 'searchResults':
-                let data = message.data;
-                dataArray[data.index].match = data.match;
-                dataArray[data.index].batch_size = data.batch_size;
-                dataArray[data.index].lines = data.lines;
+                dataArray = message.data;
                 drawSearchResults();
                 break;
         }
@@ -56,12 +53,12 @@
         let query = $('#input-search').val();
         if (!query || query === "") {
             for (let i in dataArray) {
-                dataArray[i].match = null;
+                dataArray[i].matches = null;
             }
             drawGraph();
         } else {
             for (let i in dataArray) {
-                dataArray[i].match = false;
+                dataArray[i].matches = false;
             }
             vscode.postMessage({
                 command: 'search',
@@ -127,28 +124,30 @@
 
     function drawSearchResults() {
         for (let index in dataArray) {
-            let item = dataArray[index];
+            let file = dataArray[index];
             let rectangle = $(`div.file[data-index=${index}]`);
             rectangle.find('div').remove();
             rectangle.parent().removeClass('no-matches');
-            if (item.match === false) {
+            if (file.matches === false) {
                 // processing
                 rectangle.parent().find('span').text('Processing...')
-            } else if (item.match === null) {
+            } else if (file.matches === null) {
                 // not set yet after init
                 rectangle.parent().find('span').text(' ')
-            } else if (item.match.length === 0) {
+            } else if (file.matches.length === 0) {
                 // no results
                 rectangle.parent().find('span').text('No matches')
                 rectangle.parent().addClass('no-matches');
             } else {
                 // results
-                let matches = item.match.length;
-                rectangle.parent().find('span').text(matches + (matches === 1 ? ' match' : ' matches'))
+                let matchesSize = file.matches.length;
+                rectangle.parent().find('span').text(matchesSize + (matchesSize === 1 ? ' match' : ' matches'))
                 let imageHeight = rectangle.children("img").first().height();
-                let height = imageHeight / item.lines * item.batch_size;
-                item.match.forEach(value => {
-                    let line = createDom("div", { style: `position: absolute; top: ${(value / item.batch_size) * height}px; height: ${height-1}px; width: 100%;`, "data-index": index, "data-line": value, class: "match" });
+                file.matches.forEach(part => {
+                    let partSize = part.end - part.start;
+                    let height = imageHeight / item.lines * partSize;
+                    let top = imageHeight / item.lines * part.start;
+                    let line = createDom("div", { style: `position: absolute; top: ${top}px; height: ${height}px; width: 100%;`, "data-index": index, "data-line": part.start, class: "match" });
                     rectangle.append(line);
                 });
             }

@@ -8,7 +8,7 @@ Finally, source code parts can be search by using natural language.
 
 ## Features
 
-### Local renaming of code symbol names without without effective code changes
+### Local renaming of code symbol names without effective code changes
 
 For each source code file, it can be decided individually whether all symbol names should be "renamed" automatically using a renaming technique, or only individual manually selected symbols.
 

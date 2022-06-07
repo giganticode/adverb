@@ -16,7 +16,7 @@ interface Item {
   relativePath: string;
   lines: number;
   content: string;
-  match: object | null | false;
+  matches: object | null | false;
   lastModified: Date;
   hash: string;
   imagePath: string;
@@ -198,7 +198,7 @@ export class SearchCommand extends Command {
         newItem.name = file;
         newItem.relativePath = relativePath;
         newItem.path = absolutePath;
-        newItem.match = null;
+        newItem.matches = null;
 
         if (fs.statSync(absolutePath).isDirectory()) {
           this.scanItem(newItem);
@@ -221,64 +221,38 @@ export class SearchCommand extends Command {
     }
   }
 
-  private getSearchResultFromColBERT(search_phrase: string) {
+  private getSearchResults(model: "colBERT" | "codeBERT", search_phrase: string) {
     if (!this.overviewPanel)
       return;
     const url = Settings.getSearchApiUrl();
     const batch_size = 1;
-    const results = this.dataArray.map((x, i) => ({ index: i, relativePath: x.relativePath, match: [], lines: x.lines, batch_size: batch_size }));
-    axios.post(url, {
-      model: "colBERT",
-      search: search_phrase,
-      content: JSON.stringify(this.dataArray),
-      index_name: this.index_name,
-      batch_size: batch_size
-    }).then((response: any) => {
-      if (response.data && (response.data as []).length > 0) {
-        const stringl = (response.data as []).map(x => path.basename(x["relativePath"]) + " - " + JSON.stringify(x["match"]) + "\n");
-        console.log(stringl.toString());
-        results.forEach(item => {
-          const result = (response.data as []).find(x => x["relativePath"] === item.relativePath);
-          if (result)
-            item.match = (result["match"] as []).map(x => x["line"]);
-          this.overviewPanel!.webview.postMessage({ command: "searchResults", data: item });
-        });
+    const data = this.dataArray.map(x => {
+      const matches = [];
+      const lines = x.content.split("\n");
+      for (let i = 0; i < lines.length; i += batch_size) {
+        const end = i + batch_size > lines.length - 1 ? lines.length - 1 : i + batch_size;
+        const linesContent = lines.slice(i, end).join("\n");
+        matches.push({ start: i, end: i + batch_size, code: linesContent });
       }
-    }).catch((err) => {
-      console.log(err);
-      results.forEach(item =>
-        this.overviewPanel!.webview.postMessage({ command: "searchResults", data: item })
-      );
+      return { ...x, content: undefined, matches: matches };
     });
-  }
 
-  private getSearchResultFromCodeBERT(search_phrase: string) {
-    if (!this.overviewPanel)
-      return;
-    const url = Settings.getSearchApiUrl();
-    const batch_size = 1;
-    const results = this.dataArray.map((x, i) => ({ index: i, relativePath: x.relativePath, match: [], lines: x.lines, batch_size: batch_size }));
     axios.post(url, {
-      model: "codeBERT",
+      model: model,
       search: search_phrase,
-      content: JSON.stringify(this.dataArray),
-      batch_size: batch_size
+      content: JSON.stringify(data),
+      index_name: this.index_name
     }).then((response: any) => {
-      if (response.data && (response.data as []).length > 0) {
-        const stringl = (response.data as []).map(x => path.basename(x["relativePath"]) + " - " + JSON.stringify(x["match"]) + "\n");
-        console.log(stringl.toString());
-        results.forEach(item => {
-          const result = (response.data as []).find(x => x["relativePath"] === item.relativePath);
-          if (result)
-            item.match = (result["match"] as []).map(x => x["line"]);
-          this.overviewPanel!.webview.postMessage({ command: "searchResults", data: item });
-        });
+      if (response.data)
+        this.overviewPanel!.webview.postMessage({ command: "searchResults", data: response.data });
+      else{
+        data.forEach(f => f.matches = []);
+        this.overviewPanel!.webview.postMessage({ command: "searchResults", data: data });
       }
     }).catch((err) => {
       console.log(err);
-      results.forEach(item =>
-        this.overviewPanel!.webview.postMessage({ command: "searchResults", data: item })
-      );
+      data.forEach(f => f.matches = []);
+      this.overviewPanel!.webview.postMessage({ command: "searchResults", data: data });
     });
   }
 
@@ -323,9 +297,9 @@ export class SearchCommand extends Command {
             case "search":
               const search = message.value;
               if (Settings.getSearchModelType() === "stanford/ColBERT")
-                this.getSearchResultFromColBERT(search);
+                this.getSearchResults("colBERT", search);
               else
-                this.getSearchResultFromCodeBERT(search);
+                this.getSearchResults("codeBERT", search);
               break;
           }
         },
