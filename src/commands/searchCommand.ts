@@ -228,13 +228,13 @@ export class SearchCommand extends Command {
     const batch_size = 1;
     const data = this.dataArray.map(x => {
       const matches = [];
-      const lines = x.content.split("\n");
+      const lines = x.content.split(/\r\n|\r|\n/);
       for (let i = 0; i < lines.length; i += batch_size) {
         const end = i + batch_size > lines.length - 1 ? lines.length - 1 : i + batch_size;
         const linesContent = lines.slice(i, end).join("\n");
         matches.push({ start: i, end: i + batch_size, code: linesContent });
       }
-      return { ...x, content: undefined, matches: matches };
+      return { ...x, lines: lines.length, content: undefined, matches: matches };
     });
 
     axios.post(url, {
