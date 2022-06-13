@@ -47,12 +47,12 @@ export class Settings {
     return this.getBackendUrl() + Settings.configuration.get<string>("searchIndexUrl", "/api/search_index");
   }
 
-  static getDirectoriesToExclude(): string[] {
-    return Settings.configuration.get<string[]>("excludeDirectories", []);
+  static getSearchBatchSize(): number {
+    return Settings.configuration.get<number>("searchBatchSize", 0);
   }
 
-  static getFileTypesToExclude(): string[] {
-    return Settings.configuration.get<string[]>("excludeFiletypes", []);
+  static getDirectoriesToExclude(): string[] {
+    return Settings.configuration.get<string[]>("excludeDirectories", []);
   }
 
   // ** STYLING **

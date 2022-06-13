@@ -3,6 +3,8 @@ import * as fs from "fs";
 import * as path from "path";
 import { Md5 } from "ts-md5";
 import { ExtensionContext, Position, Selection, TextEditor, TextEditorRevealType, Uri, ViewColumn, WebviewPanel, window, workspace } from "vscode";
+import ast from "../ast";
+import { SUPPORTED_LANGUAGES } from "../extension";
 import { Settings } from "../settings";
 import { Command, Commands } from "./_helpers";
 
@@ -36,9 +38,10 @@ export class SearchCommand extends Command {
     this.context = context;
     this.CACHE_PATH = path.join(this.context.extensionPath, "resources", "images", "minimap");
 
-    this.getCachedWebViewContent();
-    if (Settings.getSearchModelType() === "stanford/ColBERT")
-      this.indexAllFiles();
+    this.getCachedWebViewContent().then(e => {
+      if (Settings.getSearchModelType() === "stanford/ColBERT")
+        this.indexAllFiles();
+    });
 
     workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration("adverb"))
@@ -49,11 +52,10 @@ export class SearchCommand extends Command {
 
   private async indexAllFiles() {
     const url = Settings.getSearchIndexApiUrl();
-    const batch_size = 1;
+    const data = await this.getSearchParts();
     axios.post(url, {
-      content: JSON.stringify(this.dataArray),
-      index_name: this.index_name,
-      batch_size: batch_size
+      content: JSON.stringify(data),
+      index_name: this.index_name
     }).then((response: any) => {
     }).catch((err) => {
       console.log(err);
@@ -82,11 +84,11 @@ export class SearchCommand extends Command {
         }
       );
 
-      this.overviewPanel.webview.html = this.getCachedWebViewContent();
+      this.overviewPanel.webview.html = await this.getCachedWebViewContent();
 
-      this.overviewPanel.onDidChangeViewState(e => {
+      this.overviewPanel.onDidChangeViewState(async e => {
         if (e.webviewPanel.visible && e.webviewPanel.active) {
-          (this.overviewPanel as WebviewPanel).webview.html = this.getCachedWebViewContent();
+          (this.overviewPanel as WebviewPanel).webview.html = await this.getCachedWebViewContent();
         }
       }, null, this.context.subscriptions
       );
@@ -99,10 +101,6 @@ export class SearchCommand extends Command {
   }
 
   private generateSVGFromPath(filePath: string, hash: string) {
-    let extension = path.extname(filePath);
-    if (Settings.getFileTypesToExclude().indexOf(extension) > -1)
-      return;
-
     let content = fs.readFileSync(filePath).toString();
     let lines = content.split(/\r\n|\r|\n/);
     let lineCount = lines.length;
@@ -131,20 +129,20 @@ export class SearchCommand extends Command {
     }
   }
 
-  private getCachedWebViewContent() {
+  private async getCachedWebViewContent() {
     if (this.cachedWebViewContent === null) {
-      this.cachedWebViewContent = this.getWebviewContent();
+      this.cachedWebViewContent = await this.getWebviewContent();
     }
     return this.cachedWebViewContent;
   }
 
-  private getWebviewContent() {
+  private async getWebviewContent() {
     if (!workspace.workspaceFolders)
       return "No workspace root defined";
 
     const resourcePath = path.resolve(this.context.extensionPath, "resources");
     this.dataArray = [];
-    this.initDirectoryMap();
+    await this.initDirectoryMap();
     this.initCache();
 
     for (const key in this.directoryMap) {
@@ -175,23 +173,22 @@ export class SearchCommand extends Command {
     }
   }
 
-  private initDirectoryMap() {
+  private async initDirectoryMap() {
     this.directoryMap = {} as DirectoryMap;
     const rootItem = {} as Item;
     rootItem.name = "root";
     rootItem.path = workspace.workspaceFolders![0].uri.fsPath;
     rootItem.relativePath = "root";
-    this.scanItem(rootItem);
+    await this.scanItem(rootItem);
   }
 
-  private scanItem(item: Item) {
+  private async scanItem(item: Item) {
     try {
       if (Settings.getDirectoriesToExclude().indexOf(item.name) > -1)
         return;
 
       const files = fs.readdirSync(item.path);
-
-      files.forEach((file: any) => {
+      for (const file of files) {
         let relativePath = path.join(item.relativePath, file);
         let absolutePath = path.join(item.path, file);
         let newItem = {} as Item;
@@ -201,41 +198,30 @@ export class SearchCommand extends Command {
         newItem.matches = null;
 
         if (fs.statSync(absolutePath).isDirectory()) {
-          this.scanItem(newItem);
+          await this.scanItem(newItem);
         } else {
-          let extension = path.extname(file);
-          if (Settings.getFileTypesToExclude().indexOf(extension) > -1) {
-            return;
+          const document = await workspace.openTextDocument(newItem.path);
+          if (document && SUPPORTED_LANGUAGES.includes(document.languageId)) {
+            let content = fs.readFileSync(absolutePath).toString();
+            let lineCount = content.split(/\r\n|\r|\n/).length;
+            newItem.content = content;
+            newItem.lines = lineCount;
+            newItem.lastModified = fs.statSync(absolutePath).mtime;
+            newItem.hash = Md5.hashStr(absolutePath) as string;
+            this.directoryMap[relativePath] = newItem;
           }
-          let content = fs.readFileSync(absolutePath).toString();
-          let lineCount = content.split(/\r\n|\r|\n/).length;
-          newItem.content = content;
-          newItem.lines = lineCount;
-          newItem.lastModified = fs.statSync(absolutePath).mtime;
-          newItem.hash = Md5.hashStr(absolutePath) as string;
-          this.directoryMap[relativePath] = newItem;
         }
-      });
+      }
     } catch (e) {
       console.log(e);
     }
   }
 
-  private getSearchResults(model: "colBERT" | "codeBERT", search_phrase: string) {
+  private async getSearchResults(model: "colBERT" | "codeBERT", search_phrase: string) {
     if (!this.overviewPanel)
       return;
     const url = Settings.getSearchApiUrl();
-    const batch_size = 1;
-    const data = this.dataArray.map(x => {
-      const matches = [];
-      const lines = x.content.split(/\r\n|\r|\n/);
-      for (let i = 0; i < lines.length; i += batch_size) {
-        const end = i + batch_size > lines.length - 1 ? lines.length - 1 : i + batch_size;
-        const linesContent = lines.slice(i, end).join("\n");
-        matches.push({ start: i, end: i + batch_size, code: linesContent });
-      }
-      return { ...x, lines: lines.length, content: undefined, matches: matches };
-    });
+    const data = await this.getSearchParts();
 
     axios.post(url, {
       model: model,
@@ -245,7 +231,7 @@ export class SearchCommand extends Command {
     }).then((response: any) => {
       if (response.data)
         this.overviewPanel!.webview.postMessage({ command: "searchResults", data: response.data });
-      else{
+      else {
         data.forEach(f => f.matches = []);
         this.overviewPanel!.webview.postMessage({ command: "searchResults", data: data });
       }
@@ -254,6 +240,40 @@ export class SearchCommand extends Command {
       data.forEach(f => f.matches = []);
       this.overviewPanel!.webview.postMessage({ command: "searchResults", data: data });
     });
+  }
+
+  private async getSearchParts() {
+    const batch_size = Settings.getSearchBatchSize();
+    const data = [];
+    for (const x of this.dataArray) {
+      const matches = [];
+      let length = 0;
+      if (batch_size > 0) {
+        const lines = x.content.split(/\r\n|\r|\n/);
+        length = lines.length;
+        for (let i = 0; i < lines.length; i += batch_size) {
+          const end = i + batch_size > lines.length - 1 ? lines.length - 1 : i + batch_size;
+          const linesContent = lines.slice(i, end).join("\n");
+          matches.push({ start: i, end: i + batch_size, code: linesContent });
+        }
+      } else {
+        const document = await workspace.openTextDocument(x.path);
+        if (document) {
+          if (SUPPORTED_LANGUAGES.includes(document.languageId)) {
+            const methods = ast.getFunctionDeclarations(document);
+            length = x.lines;
+            methods.forEach(i => {
+              let content: string = "";
+              for (let j = i.start.line; j <= i.end.line; j++)
+                content += document.lineAt(j).text + "\n";
+                matches.push({ start: i.start.line, end: i.end.line, code: content });
+            });
+          }
+        }
+      }
+      data.push({ ...x, lines: length, content: undefined, matches: matches });
+    }
+    return data;
   }
 
   private setupMessageListener() {
@@ -278,7 +298,7 @@ export class SearchCommand extends Command {
               const filePath = message.path;
               const openPath = Uri.file(filePath); //A request file path
               workspace.openTextDocument(openPath).then(doc => {
-                window.showTextDocument(doc).then((textEditor: TextEditor) => {
+                window.showTextDocument(doc, { viewColumn: ViewColumn.Beside, preview: true }).then((textEditor: TextEditor) => {
                   if (message.line !== null) {
                     let moveToLine = parseInt(message.line);
                     const documentLineCount = textEditor.document.lineCount;
@@ -300,6 +320,9 @@ export class SearchCommand extends Command {
                 this.getSearchResults("colBERT", search);
               else
                 this.getSearchResults("codeBERT", search);
+              break;
+            case "show":
+
               break;
           }
         },

@@ -69,10 +69,10 @@
     }
 
     function openFile(index, line) {
-        if (index >= 0) {
+        if (index) {
             vscode.postMessage({
                 command: 'openFile',
-                path: dataArray[index].path,
+                path: dataArray.find(x => x.hash == index).path,
                 line: line,
             })
         }
@@ -104,7 +104,7 @@
         for (let index in dataArray) {
             let item = dataArray[index];
             let fileContainer = createDom("div", { "style": `display: inline-block; position: relative; width: ${width + 40}px; height: ${canvasHeight + 10}px` });
-            let rectangle = createDom("div", { "class": "file", "style": `background-repeat: no-repeat; background-color: #333333; left: ${x}px; width: ${width}px; height: auto; background-size: auto 100%;`, "data-index": index });
+            let rectangle = createDom("div", { "class": "file", "style": `background-repeat: no-repeat; background-color: #333333; left: ${x}px; width: ${width}px; height: auto; background-size: auto 100%;`, "data-index": item.hash });
             fileContainer.appendChild(rectangle);
 
             let span = createDom("span", {"class": "matches"});
@@ -125,7 +125,7 @@
     function drawSearchResults() {
         for (let index in dataArray) {
             let file = dataArray[index];
-            let rectangle = $(`div.file[data-index=${index}]`);
+            let rectangle = $(`div.file[data-index=${file.hash}]`);
             rectangle.find('div').remove();
             rectangle.parent().removeClass('no-matches');
             if (file.matches === false) {
@@ -145,9 +145,9 @@
                 let imageHeight = rectangle.children("img").first().height();
                 file.matches.forEach(part => {
                     let partSize = part.end - part.start;
-                    let height = imageHeight / item.lines * partSize;
-                    let top = imageHeight / item.lines * part.start;
-                    let line = createDom("div", { style: `position: absolute; top: ${top}px; height: ${height}px; width: 100%;`, "data-index": index, "data-line": part.start, class: "match" });
+                    let height = imageHeight / file.lines * partSize;
+                    let top = imageHeight / file.lines * part.start;
+                    let line = createDom("div", { style: `position: absolute; top: ${top}px; height: ${height}px; width: 100%;`, "data-index": file.hash, "data-line": part.start, class: "match" });
                     rectangle.append(line);
                 });
             }
