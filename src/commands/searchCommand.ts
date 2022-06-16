@@ -38,10 +38,10 @@ export class SearchCommand extends Command {
     this.context = context;
     this.CACHE_PATH = path.join(this.context.extensionPath, "resources", "images", "minimap");
 
-    this.getCachedWebViewContent().then(e => {
-      if (Settings.getSearchModelType() === "stanford/ColBERT")
-        this.indexAllFiles();
-    });
+    // this.getCachedWebViewContent().then(e => {
+    //   if (Settings.getSearchModelType() === "stanford/ColBERT")
+    //     this.indexAllFiles();
+    // });
 
     workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration("adverb"))
@@ -93,7 +93,7 @@ export class SearchCommand extends Command {
       }, null, this.context.subscriptions
       );
 
-      this.setupMessageListener();
+      await this.setupMessageListener();
 
       // Reset when the current panel is closed
       this.overviewPanel.onDidDispose(() => { this.overviewPanel = undefined }, null, this.context.subscriptions);
@@ -266,7 +266,7 @@ export class SearchCommand extends Command {
               let content: string = "";
               for (let j = i.start.line; j <= i.end.line; j++)
                 content += document.lineAt(j).text + "\n";
-                matches.push({ start: i.start.line, end: i.end.line, code: content });
+              matches.push({ start: i.start.line, end: i.end.line, code: content });
             });
           }
         }
@@ -276,10 +276,10 @@ export class SearchCommand extends Command {
     return data;
   }
 
-  private setupMessageListener() {
+  private async setupMessageListener() {
     if (this.overviewPanel) {
-      this.overviewPanel.webview.onDidReceiveMessage(
-        message => {
+      await this.overviewPanel.webview.onDidReceiveMessage(
+        async message => {
           switch (message.command) {
             case "init":
               this.dataArray = this.dataArray.map(x => {

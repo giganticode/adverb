@@ -1,5 +1,4 @@
 ; (function () {
-
     const vscode = acquireVsCodeApi();
     var dataArray = [];
 
@@ -45,7 +44,7 @@
         }
     });
 
-    $('#btn-search').on('click', function() {
+    $('#btn-search').on('click', function () {
         search();
     });
 
@@ -107,12 +106,12 @@
             let rectangle = createDom("div", { "class": "file", "style": `background-repeat: no-repeat; background-color: #333333; left: ${x}px; width: ${width}px; height: auto; background-size: auto 100%;`, "data-index": item.hash });
             fileContainer.appendChild(rectangle);
 
-            let span = createDom("span", {"class": "matches"});
+            let span = createDom("span", { "class": "matches" });
             span.innerHTML = "0 Match(es)";
             fileContainer.appendChild(span);
 
             // let path = "vscode-resource:" + cachePath + item.hash + ".svg"; //"https://file+.vscode-resource.vscode-webview.net/" + 
-            let image = createDom("img", {"src": item.imagePath})
+            let image = createDom("img", { "src": item.imagePath })
             rectangle.appendChild(image);
 
             let text = createDom("p", { "style": `transform: rotate(90deg) translateX(100%); position: absolute; right: 25px; top: -15px; transform-origin: 100% 100%; margin: 0;` });
@@ -148,6 +147,12 @@
                     let height = imageHeight / file.lines * partSize;
                     let top = imageHeight / file.lines * part.start;
                     let line = createDom("div", { style: `position: absolute; top: ${top}px; height: ${height}px; width: 100%;`, "data-index": file.hash, "data-line": part.start, class: "match" });
+                    let tooltip = createDom("span", { class: "tooltipContent" });
+                    // console.log(hljs.getLanguage("js"))
+                    // console.log(highlight(part.code, { language: "js", ignoreIllegals: true }).value);
+                    // tooltip.innerHTML = highlight(part.code, { language: "js", ignoreIllegals: true }).value;
+                    tooltip.innerHTML = part.code;
+                    line.append(tooltip);
                     rectangle.append(line);
                 });
             }
