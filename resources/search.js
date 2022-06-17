@@ -146,13 +146,7 @@
                     let partSize = part.end - part.start;
                     let height = imageHeight / file.lines * partSize;
                     let top = imageHeight / file.lines * part.start;
-                    let line = createDom("div", { style: `position: absolute; top: ${top}px; height: ${height}px; width: 100%;`, "data-index": file.hash, "data-line": part.start, class: "match" });
-                    let tooltip = createDom("span", { class: "tooltipContent" });
-                    // console.log(hljs.getLanguage("js"))
-                    // console.log(highlight(part.code, { language: "js", ignoreIllegals: true }).value);
-                    // tooltip.innerHTML = highlight(part.code, { language: "js", ignoreIllegals: true }).value;
-                    tooltip.innerHTML = part.code;
-                    line.append(tooltip);
+                    let line = createDom("div", { style: `position: absolute; top: ${top}px; height: ${height}px; width: 100%;`, "data-index": file.hash, "data-line": part.start, class: "match", "data-tooltip": "", "data-tooltip-label": `Search result: line ${part.start + 1}-${part.end + 1}`, "data-tooltip-message": part.code });
                     rectangle.append(line);
                 });
             }

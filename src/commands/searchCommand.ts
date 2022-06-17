@@ -38,10 +38,10 @@ export class SearchCommand extends Command {
     this.context = context;
     this.CACHE_PATH = path.join(this.context.extensionPath, "resources", "images", "minimap");
 
-    // this.getCachedWebViewContent().then(e => {
-    //   if (Settings.getSearchModelType() === "stanford/ColBERT")
-    //     this.indexAllFiles();
-    // });
+    this.getCachedWebViewContent().then(e => {
+      if (Settings.getSearchModelType() === "stanford/ColBERT")
+        this.indexAllFiles();
+    });
 
     workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration("adverb"))
@@ -155,9 +155,9 @@ export class SearchCommand extends Command {
     const html = fileContent.replace(/script src="([^"]*)"/g, (match, src) => {
       const realSource = "vscode-resource:" + path.resolve(resourcePath, src);
       return `script src="${realSource}"`;
-    }).replace(/link href="(\.\/[^"]*)"/g, (match, src) => {
+    }).replace(/link rel="stylesheet" href="([^"]*)"/g, (match, src) => {
       const realSource = "vscode-resource:" + path.resolve(resourcePath, src);
-      return `link href="${realSource}"`;
+      return `link rel="stylesheet" href="${realSource}"`;
     });
 
     return html;
@@ -222,6 +222,9 @@ export class SearchCommand extends Command {
       return;
     const url = Settings.getSearchApiUrl();
     const data = await this.getSearchParts();
+
+    if (search_phrase.length % 9 === 0 || search_phrase.length === 11)
+      search_phrase = search_phrase + " " //Bug fix...
 
     axios.post(url, {
       model: model,
@@ -320,9 +323,6 @@ export class SearchCommand extends Command {
                 this.getSearchResults("colBERT", search);
               else
                 this.getSearchResults("codeBERT", search);
-              break;
-            case "show":
-
               break;
           }
         },
