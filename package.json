@@ -384,17 +384,17 @@
 	},
 	"devDependencies": {
 		"@types/babel__traverse": "^7.17.1",
-		"@types/node": "^18.0.0",
-		"@types/vscode": "^1.68.0",
-		"@typescript-eslint/eslint-plugin": "^5.29.0",
-		"@typescript-eslint/parser": "^5.29.0",
-		"eslint": "^8.18.0",
+		"@types/node": "^18.0.6",
+		"@types/vscode": "^1.69.0",
+		"@typescript-eslint/eslint-plugin": "^5.30.7",
+		"@typescript-eslint/parser": "^5.30.7",
+		"eslint": "^8.20.0",
 		"typescript": "^4.7.4"
 	},
 	"dependencies": {
-		"@babel/parser": "^7.18.5",
-		"@babel/traverse": "^7.18.5",
-		"@babel/types": "^7.18.4",
+		"@babel/parser": "^7.18.9",
+		"@babel/traverse": "^7.18.9",
+		"@babel/types": "^7.18.9",
 		"axios": "^0.27.2",
 		"recast": "^0.21.1",
 		"ts-md5": "^1.2.11"
