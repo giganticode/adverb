@@ -1,6 +1,5 @@
-import { Command, ExtensionContext, Range } from "vscode";
-import { AdverbCache, CodeLensCacheBlock, Folding } from "./models";
-import { hashCode } from "./utils";
+import { ExtensionContext, Range } from "vscode";
+import { AdverbCache, Folding } from "./models";
 
 export class Cache {
     private static CACHE_NAME: string = "ADVERB";
@@ -47,67 +46,5 @@ export class Cache {
                 cache.foldingsCache[fileName] = undefined;
             this.context.workspaceState.update(this.CACHE_NAME, cache);
         }
-    };
-
-    static getCodeLensCacheOfDocument(fileName: string): CodeLensCacheBlock[] | undefined {
-        const cache = this.getCache();
-        if (!cache?.codeLensCache)
-            return undefined;
-        return cache.codeLensCache[fileName];
-    };
-
-    static getCodeLensCacheOfDocumentAndCodeBlock(fileName: string, range: Range): CodeLensCacheBlock | undefined {
-        const cache = this.getCache();
-        if (!cache?.codeLensCache)
-            return undefined;
-        const fileCache = cache.codeLensCache[fileName];
-        if (!fileCache)
-            return undefined;
-        const codeBlock = fileCache.find(x => x.range.isEqual(range));
-        return codeBlock;
-    };
-
-    static updateCodeLensCacheOfDocumentAndCodeBlock(fileName: string, range: Range, command: Command): void {
-        let cache = this.getCache();
-        if (!cache)
-            cache = new AdverbCache();
-        if (!cache.codeLensCache)
-            cache.codeLensCache = {}
-        if (!cache.codeLensCache[fileName])
-            cache.codeLensCache[fileName] = [];
-        cache.codeLensCache[fileName] =
-            [
-                ...cache.codeLensCache[fileName]!.filter(x => !x.range.isEqual(range)),
-                { range: range, command: command }
-            ];
-        this.context.workspaceState.update(this.CACHE_NAME, cache);
-    };
-
-    static cleanCodeLensCacheOfDocument(fileName: string, startingFromLine: number | undefined = undefined): void {
-        const cache = this.getCache();
-        if (cache?.codeLensCache && cache?.codeLensCache[fileName]) {
-            if (startingFromLine)
-                cache.codeLensCache[fileName] = cache.codeLensCache[fileName]?.filter(x => x.range.start.line < startingFromLine && x.range.end.line < startingFromLine);
-            else
-                cache.codeLensCache[fileName] = undefined;
-            this.context.workspaceState.update(this.CACHE_NAME, cache);
-        }
-    };
-
-    static getCachedSummary(code: string): string | undefined {
-        const hash = hashCode(code);
-        const cache = this.getCache();
-        const cachedSummary = cache?.summariesCache ? cache.summariesCache[hash] : undefined;
-        return cachedSummary;
-    };
-
-    static cacheSummary(code: string, summary: string): void {
-        const hash = hashCode(code);
-        let cache = this.getCache();
-        if (!cache)
-            cache = new AdverbCache();
-        if (!cache.summariesCache)
-            cache.summariesCache = {};
-        cache.summariesCache[hash] = summary;
     };
 };

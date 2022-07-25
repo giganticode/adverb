@@ -21,6 +21,16 @@
                 dataArray = message.data;
                 drawSearchResults();
                 break;
+            case 'lastIndex':
+                if (message.data) {
+                    let container = document.getElementById('lbl-last-index');
+                    container.innerHTML = "(Last indexing: " + message.data + ")";
+                }
+                break;
+            case 'indexing':
+                let container = document.getElementById('lbl-last-index');
+                container.innerHTML = "Indexing...";
+                break;
         }
     });
 
@@ -76,6 +86,10 @@
             })
         }
     }
+
+    $('#btn-index').on('click', function () {
+        vscode.postMessage({ command: 'index' });
+    });
 
     function createDom(e, a) {
         n = document.createElement(e);

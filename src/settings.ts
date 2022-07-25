@@ -35,6 +35,10 @@ export class Settings {
     return this.getBackendUrl() + Settings.configuration.get<string>("summaryUrl", "/api/summary");
   }
 
+  static getSummariesApiUrl(): string {
+    return this.getBackendUrl() + Settings.configuration.get<string>("summariesUrl", "/api/summaries");
+  }
+
   static getNameApiUrl(): string {
     return this.getBackendUrl() + Settings.configuration.get<string>("nameUrl", "/api/name");
   }

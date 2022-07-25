@@ -141,7 +141,8 @@
             transition-property: color, background-color, border;
         }
 
-        #btn-search {
+        #btn-search,
+        #btn-index {
             width: 60px;
             cursor: pointer;
             height: 40px;
@@ -160,6 +161,11 @@
 </head>
 
 <body>
+
+    <div style="text-align: center;">
+        <button id="btn-index" style="width: auto; height: auto;">Index workspace</button>
+        <label id="lbl-last-index" style="margin-left: 5px;"></label>
+    </div>
 
     <div id="search">
         <input placeholder="Search..." type="search" id="input-search" autofocus />

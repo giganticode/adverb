@@ -28,7 +28,7 @@ export class FoldCommand extends Command {
       for (let i = start; i <= end; i++) {
         content += editor.document.lineAt(i).text + "\n";
       }
-      summary = await getCodeSummary(content, true);
+      summary = await getCodeSummary(content);
     }
     if (summary) {
       await addFolding(editor, start, end, summary);

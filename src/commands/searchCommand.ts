@@ -32,6 +32,7 @@ export class SearchCommand extends Command {
   private dataArray: Item[] = [];
   private CACHE_PATH: string;
   private index_name: string = "adverb";
+  private lastIndexing: string | undefined = undefined;
 
   constructor(context: ExtensionContext) {
     super(Commands.Search, false, false);
@@ -53,13 +54,25 @@ export class SearchCommand extends Command {
   private async indexAllFiles() {
     const url = Settings.getSearchIndexApiUrl();
     const data = await this.getSearchParts();
+    window.setStatusBarMessage("Workspace indexing started...");
+    this.overviewPanel?.webview.postMessage({
+      command: "indexing"
+    });
     axios.post(url, {
-      content: JSON.stringify(data),
-      index_name: this.index_name
+      content: JSON.stringify(data), index_name: this.index_name
     }).then((response: any) => {
     }).catch((err) => {
-      console.log(err);
-    })
+    }).finally(() => {
+      const d = new Date();
+      const dateTimeString = d.getDate() + "-" + (d.getMonth() + 1) + "-" + d.getFullYear() + " " +
+        d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds()
+      this.lastIndexing = dateTimeString;
+      this.overviewPanel?.webview.postMessage({
+        command: "lastIndex",
+        data: this.lastIndexing
+      });
+      window.setStatusBarMessage("Workspace successfully indexed (" + dateTimeString + ").");
+    });
   }
 
   async execute(editor: TextEditor, ...args: any[]) {
@@ -130,9 +143,9 @@ export class SearchCommand extends Command {
   }
 
   private async getCachedWebViewContent() {
-    if (this.cachedWebViewContent === null) {
-      this.cachedWebViewContent = await this.getWebviewContent();
-    }
+    // if (this.cachedWebViewContent === null) {
+    this.cachedWebViewContent = await this.getWebviewContent();
+    // }
     return this.cachedWebViewContent;
   }
 
@@ -296,6 +309,10 @@ export class SearchCommand extends Command {
                 command: "init",
                 data: this.dataArray
               });
+              this.overviewPanel!.webview.postMessage({
+                command: "lastIndex",
+                data: this.lastIndexing
+              });
               break;
             case "openFile":
               const filePath = message.path;
@@ -316,6 +333,9 @@ export class SearchCommand extends Command {
                   }
                 });
               });
+              break;
+            case "index":
+              this.indexAllFiles();
               break;
             case "search":
               const search = message.value;
