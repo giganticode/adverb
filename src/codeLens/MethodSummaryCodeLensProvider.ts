@@ -1,4 +1,4 @@
-import { CodeLens, CodeLensProvider, Event, EventEmitter, ProviderResult, Range, TextDocument, window, workspace } from "vscode";
+import { CodeLens, CodeLensProvider, Event, EventEmitter, ProviderResult, Range, TextDocument, workspace } from "vscode";
 import { getCodeSummaries } from "../api";
 import ast from "../ast";
 import { Commands } from "../commands";
@@ -7,8 +7,6 @@ import { Settings } from "../settings";
 export class MethodSummaryCodeLensProvider implements CodeLensProvider {
     private _onDidChangeCodeLenses: EventEmitter<void> = new EventEmitter<void>();
     public readonly onDidChangeCodeLenses: Event<void> = this._onDidChangeCodeLenses.event;
-
-    private codeLenses: CodeLens[] = [];
 
     constructor() {
         workspace.onDidChangeConfiguration((event) => {
@@ -46,8 +44,4 @@ export class MethodSummaryCodeLensProvider implements CodeLensProvider {
         }
         return undefined;
     }
-
-    public resolveCodeLens(codeLens: CodeLens) {
-        return codeLens;
-    };
 }

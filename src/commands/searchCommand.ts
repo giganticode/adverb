@@ -32,7 +32,7 @@ export class SearchCommand extends Command {
   private dataArray: Item[] = [];
   private CACHE_PATH: string;
   private index_name: string = "adverb";
-  private lastIndexing: string | undefined = undefined;
+  private indexStatus: string | undefined = undefined;
 
   constructor(context: ExtensionContext) {
     super(Commands.Search, false, false);
@@ -42,21 +42,37 @@ export class SearchCommand extends Command {
     this.getCachedWebViewContent().then(e => {
       if (Settings.getSearchModelType() === "stanford/ColBERT")
         this.indexAllFiles();
+      else {
+        this.indexStatus = "- not needed -";
+        this.overviewPanel?.webview.postMessage({
+          command: "indexStatus",
+          data: this.indexStatus
+        });
+      }
     });
 
     workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration("adverb"))
         if (Settings.getSearchModelType() !== "stanford/ColBERT") //old value check...
           this.indexAllFiles();
+        else {
+          this.indexStatus = "- not needed -";
+          this.overviewPanel?.webview.postMessage({
+            command: "indexStatus",
+            data: this.indexStatus
+          });
+        }
     });
   }
 
   private async indexAllFiles() {
     const url = Settings.getSearchIndexApiUrl();
     const data = await this.getSearchParts();
-    window.setStatusBarMessage("Workspace indexing started...");
+    window.setStatusBarMessage("Workspace search indexing started...");
+    this.indexStatus = "Indexing...";
     this.overviewPanel?.webview.postMessage({
-      command: "indexing"
+      command: "indexStatus",
+      data: this.indexStatus
     });
     axios.post(url, {
       content: JSON.stringify(data), index_name: this.index_name
@@ -66,12 +82,12 @@ export class SearchCommand extends Command {
       const d = new Date();
       const dateTimeString = d.getDate() + "-" + (d.getMonth() + 1) + "-" + d.getFullYear() + " " +
         d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds()
-      this.lastIndexing = dateTimeString;
+      this.indexStatus = "(Last indexing: " + dateTimeString + ")";
       this.overviewPanel?.webview.postMessage({
-        command: "lastIndex",
-        data: this.lastIndexing
+        command: "indexStatus",
+        data: this.indexStatus
       });
-      window.setStatusBarMessage("Workspace successfully indexed (" + dateTimeString + ").");
+      window.setStatusBarMessage("Workspace search-index successfully created (" + dateTimeString + ").");
     });
   }
 
@@ -310,8 +326,8 @@ export class SearchCommand extends Command {
                 data: this.dataArray
               });
               this.overviewPanel!.webview.postMessage({
-                command: "lastIndex",
-                data: this.lastIndexing
+                command: "indexStatus",
+                data: this.indexStatus
               });
               break;
             case "openFile":
@@ -335,7 +351,15 @@ export class SearchCommand extends Command {
               });
               break;
             case "index":
-              this.indexAllFiles();
+              if (Settings.getSearchModelType() === "stanford/ColBERT")
+                this.indexAllFiles();
+              else {
+                this.indexStatus = "- not needed -";
+                this.overviewPanel?.webview.postMessage({
+                  command: "indexStatus",
+                  data: this.indexStatus
+                });
+              }
               break;
             case "search":
               const search = message.value;

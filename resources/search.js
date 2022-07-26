@@ -21,15 +21,11 @@
                 dataArray = message.data;
                 drawSearchResults();
                 break;
-            case 'lastIndex':
+            case 'indexStatus':
                 if (message.data) {
                     let container = document.getElementById('lbl-last-index');
-                    container.innerHTML = "(Last indexing: " + message.data + ")";
+                    container.innerHTML = message.data ;
                 }
-                break;
-            case 'indexing':
-                let container = document.getElementById('lbl-last-index');
-                container.innerHTML = "Indexing...";
                 break;
         }
     });

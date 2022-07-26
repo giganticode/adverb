@@ -41,9 +41,17 @@ With the command **"Fold lines and show summary"**, the selected lines are folde
 
 > Tip: A code summary is also automatically shown above each method, giving a summary of the method/function body.
 
+### Display code summary above method/function signature (codelens)
+
+When opening a code file, a code summary gets displayed above each method/function signature (using codelens). The summary is created by ML model from the backend api. When clicking on the summary, the user can select among the following two options: either fold the selected method and display the code summary instead (see previous paragraph), or to add the summary as a comment to the original source code file above the method/function signature.
+
+### Show code symbol definition
+
+In the code editor, the extension shows for each code symbol of the current focused row the line number, where the current focused code symbols are definite. However, these annotations are only visualized, when the definitions are outside the current viewport of the editor. If the definitions are inside the current viewport, they are only highlighted. Obiously, a mixed application of this feature can appear, when for example on code symbol of the current focused code line is inside the viewport, and another one is outside the viewport.
+
 ### Search in natural language (NL) for source code parts
 
-By using the **"Search code with natural language"** command you can search for code parts using natural language. The search procedure gets executed by ML model. When executing the command, a new tab in your vscode-window appears, where the search query can be entered. The search results are shown below for each matching source code file of the current workspace. The search command can be executed from the command palette or via the shortcut `Alt + s`.
+By using the **"Search code with natural language"** command you can search for code parts using natural language. The search procedure gets executed by ML model. When executing the command, a new tab in your vscode-window appears, where the search query can be entered. The search results are shown below for each matching source code file and code part of the current workspace. When hovering a search result, the relevant code parts gets shown in a tooltip. When clicking on a search result, the respective source code file gets opened next to the search window and the editor jumps to the starting line of the code part. In the search window also a re-indexing of the current workspace can be started by clicking on the respective button. The search command can be executed from the command palette or via the shortcut `Alt + s`.
 
 ## Extension Settings
 
@@ -51,13 +59,16 @@ This extension contributes the following settings:
 
 * `adverb.codeLensEnabled`: enable/disable code lens (method/function body summary above each method/function signature)
 * `adverb.fileDecorationsEnabled`: enable/disable file decorations ("🚧") for active renamings in a source code file
-* `adverb.renamingModel`: choose the ML model for renaming
+* `adverb.renamingModel`: choose the ML model for renaming ("huggingface/CodeBERTa", "microsoft/codebert-base-mlm", "Salesforce/codet5-base")
+* `adverb.searchModel`: choose the ML model for NL->PL search ("microsoft/CodeBERT", "stanford/ColBERT")
 * `adverb.backendUrl`: API backend url
 * `adverb.nameUrl`: code name backend path
-* `adverb.summaryUrl`: code summary backend path
+* `adverb.summaryUrl`: code summary backend path (single)
+* `adverb.summariesUrl`: code summaries backend path (batch)
 * `adverb.searchUrl`: code search backend path
+* `adverb.searchIndexUrl`: code search index name
+* `adverb.searchBatchSize`: code search batch size (0=split code automatically by method bodies using AST, n=number of lines for code splitting)
 * `adverb.excludeDirectories`: determine the folder names that sould not be considered for search
-* `adverb.excludeFiletypes`: determine the file types that sould not be considered for search
 * `adverb.fontWeight`: font weight for the "renamed" symbol
 * `adverb.fontStyle`: font style for the "renamed" symbol
 * `adverb.fontSize`: font size for the "renamed" symbol
