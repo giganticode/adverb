@@ -2,7 +2,7 @@ import axios from "axios";
 import * as fs from "fs";
 import * as path from "path";
 import { Md5 } from "ts-md5";
-import { ExtensionContext, Position, Selection, TextEditor, TextEditorRevealType, Uri, ViewColumn, WebviewPanel, window, workspace } from "vscode";
+import { commands, ExtensionContext, Position, Selection, TextEditor, TextEditorRevealType, Uri, ViewColumn, WebviewPanel, window, workspace } from "vscode";
 import ast from "../ast";
 import { SUPPORTED_LANGUAGES } from "../extension";
 import { Settings } from "../settings";
@@ -333,6 +333,7 @@ export class SearchCommand extends Command {
             case "openFile":
               const filePath = message.path;
               const openPath = Uri.file(filePath); //A request file path
+              commands.executeCommand("workbench.action.closeSidebar");
               workspace.openTextDocument(openPath).then(doc => {
                 window.showTextDocument(doc, { viewColumn: ViewColumn.Beside, preview: true }).then((textEditor: TextEditor) => {
                   if (message.line !== null) {

@@ -112,7 +112,7 @@ export class RenameSingleCommand extends Command {
         title,
         step: 3,
         totalSteps: 3,
-        value: state.newName || (newNames[state.renamingTechnique!.id as number].toString() ?? ""),
+        value: state.newName || (newNames[state.renamingTechnique!.id as number]?.toString() ?? ""),
         prompt: "New symbol name for '" + originalName + "'",
         validate: async (newName) => newName === originalName ? "Please choose a different name." : undefined,
         shouldResume: shouldResume

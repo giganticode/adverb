@@ -156,7 +156,21 @@
                     let partSize = part.end - part.start;
                     let height = imageHeight / file.lines * partSize;
                     let top = imageHeight / file.lines * part.start;
-                    let line = createDom("div", { style: `position: absolute; top: ${top}px; height: ${height}px; width: 100%;`, "data-index": file.hash, "data-line": part.start, class: "match", "data-tooltip": "", "data-tooltip-label": `Search result: line ${part.start + 1}-${part.end + 1}`, "data-tooltip-message": part.code });
+                    let numberOfRanks = 10;
+                    let rank = part.rank ? `Rank: ${part.rank}/${numberOfRanks}, ` : "";
+                    let score = Math.round(part.score <= 1 ? part.score * 100 : part.score);
+                    let opacity = part.rank ? (numberOfRanks + 1 - part.rank) / numberOfRanks : score / 100;
+                    let line = createDom("div", { 
+                        style: `position: absolute; top: ${top}px; height: ${height}px; width: 100%; opacity: ${opacity};`, 
+                        "data-index": file.hash, 
+                        "data-line": part.start, 
+                        class: "match", 
+                        "data-tooltip": "",
+                        "data-tooltip-label": `Search result: line ${part.start + 1}-${part.end + 1} (${rank}Score: ${score} %)`, 
+                        "data-tooltip-message": part.code,
+                        onmouseout: `this.style.opacity=${opacity}`,
+                        onmouseover: `this.style.opacity=1`
+                    });
                     rectangle.append(line);
                 });
             }
