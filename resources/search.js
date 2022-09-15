@@ -24,7 +24,7 @@
             case 'indexStatus':
                 if (message.data) {
                     let container = document.getElementById('lbl-last-index');
-                    container.innerHTML = message.data ;
+                    container.innerHTML = message.data;
                 }
                 break;
         }
@@ -139,13 +139,13 @@
             rectangle.parent().removeClass('no-matches');
             if (file.matches === false) {
                 // processing
-                rectangle.parent().find('span').text('Processing...')
+                rectangle.parent().find('span').text('Processing...');
             } else if (file.matches === null) {
                 // not set yet after init
-                rectangle.parent().find('span').text(' ')
+                rectangle.parent().find('span').text(' ');
             } else if (file.matches.length === 0) {
                 // no results
-                rectangle.parent().find('span').text('No matches')
+                rectangle.parent().find('span').text('No matches');
                 rectangle.parent().addClass('no-matches');
             } else {
                 // results
@@ -159,14 +159,16 @@
                     let numberOfRanks = 10;
                     let rank = part.rank ? `Rank: ${part.rank}/${numberOfRanks}, ` : "";
                     let score = Math.round(part.score <= 1 ? part.score * 100 : part.score);
-                    let opacity = part.rank ? (numberOfRanks + 1 - part.rank) / numberOfRanks : score / 100;
-                    let line = createDom("div", { 
-                        style: `position: absolute; top: ${top}px; height: ${height}px; width: 100%; opacity: ${opacity};`, 
-                        "data-index": file.hash, 
-                        "data-line": part.start, 
-                        class: "match", 
+                    let opacity = part.rank ? (numberOfRanks - part.rank) / numberOfRanks : score / 100;
+                    if (opacity < 0.15)
+                        opacity = 0.15;
+                    let line = createDom("div", {
+                        style: `position: absolute; top: ${top}px; height: ${height}px; width: 100%; opacity: ${opacity};`,
+                        "data-index": file.hash,
+                        "data-line": part.start,
+                        class: "match",
                         "data-tooltip": "",
-                        "data-tooltip-label": `Search result: line ${part.start + 1}-${part.end + 1} (${rank}Score: ${score} %)`, 
+                        "data-tooltip-label": `Search result: line ${part.start + 1}-${part.end + 1} (${rank}Score: ${score} %)`,
                         "data-tooltip-message": part.code,
                         onmouseout: `this.style.opacity=${opacity}`,
                         onmouseover: `this.style.opacity=1`
